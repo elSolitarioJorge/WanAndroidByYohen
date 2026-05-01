@@ -23,6 +23,80 @@
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
+            <HorizontalScrollView
+                android:id="@+id/hsv_tags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <LinearLayout
+                    android:id="@+id/layout_tags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_latest"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="最新分享"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:background="#3B82F6"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:paddingTop="7dp"
+                        android:paddingBottom="7dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:id="@+id/tv_interview"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="面试"
+                        android:textColor="#666666"
+                        android:textSize="14sp"
+                        android:background="#EEEEEE"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:paddingTop="7dp"
+                        android:paddingBottom="7dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:id="@+id/tv_flutter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Flutter"
+                        android:textColor="#666666"
+                        android:textSize="14sp"
+                        android:background="#EEEEEE"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:paddingTop="7dp"
+                        android:paddingBottom="7dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:id="@+id/tv_kotlin"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Kotlin"
+                        android:textColor="#666666"
+                        android:textSize="14sp"
+                        android:background="#EEEEEE"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:paddingTop="7dp"
+                        android:paddingBottom="7dp"
+                        android:layout_marginEnd="8dp" />
+
+                </LinearLayout>
+
+            </HorizontalScrollView>
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_square_articles"
                 android:layout_width="match_parent"

@@ -1,6 +1,5 @@
 package com.ggg.kt.wanandroidbyyohen.ui.home
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,13 +10,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
-import com.ggg.kt.wanandroidbyyohen.data.model.Article
+import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentHomeBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
-import com.ggg.kt.wanandroidbyyohen.ui.webview.WebViewActivity
+import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
 import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
@@ -28,7 +26,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private val articleAdapter by lazy {
         ArticleAdapter { article ->
-            openWebView(article)
+            ArticleNavigator.openArticle(requireContext(), article)
         }
     }
 
@@ -95,14 +93,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
 
-    private fun openWebView(article: Article) {
-        val intent = Intent(requireContext(), WebViewActivity::class.java).apply {
-            putExtra(WebViewActivity.EXTRA_TITLE, article.title)
-            putExtra(WebViewActivity.EXTRA_URL, article.link)
-        }
-        startActivity(intent)
-    }
-
     private fun initRefresh() {
         binding.swipeRefresh.setOnRefreshListener {
             viewModel.refreshHomeData()
@@ -110,20 +100,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private fun initLoadMore() {
-        binding.rvArticles.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                if (dy <= 0) return
-
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
-                val totalItemCount = layoutManager.itemCount
-
-                if (lastVisiblePosition >= totalItemCount - 3) {
-                    viewModel.loadMoreArticles()
-                }
-            }
-        })
+        binding.rvArticles.addLoadMoreListener {
+            viewModel.loadMoreArticles()
+        }
     }
 
     override fun onDestroyView() {

@@ -1,23 +1,22 @@
 package com.ggg.kt.wanandroidbyyohen.ui.square
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
-import com.ggg.kt.wanandroidbyyohen.data.model.Article
+import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentSquareBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
-import com.ggg.kt.wanandroidbyyohen.ui.webview.WebViewActivity
+import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
 import kotlinx.coroutines.launch
 
 class SquareFragment : Fragment(R.layout.fragment_square) {
@@ -27,7 +26,7 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
     private val viewModel: SquareViewModel by viewModels()
     private val articleAdapter by lazy {
         ArticleAdapter { article ->
-            openWebView(article)
+            ArticleNavigator.openArticle(requireContext(), article)
         }
     }
 
@@ -45,6 +44,7 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
         initRecyclerView()
         initRefresh()
         initLoadMore()
+        initTags()
         observeData()
         viewModel.refreshSquareArticles()
     }
@@ -61,20 +61,27 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
     }
 
     private fun initLoadMore() {
-        binding.rvSquareArticles.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                if (dy <= 0) return
+        binding.rvSquareArticles.addLoadMoreListener {
+            viewModel.loadMoreSquareArticles()
+        }
+    }
 
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
-                val totalItemCount = layoutManager.itemCount
+    private fun initTags() {
+        binding.tvLatest.setOnClickListener {
+            viewModel.refreshSquareArticles()
+        }
 
-                if (lastVisiblePosition >= totalItemCount - 3) {
-                    viewModel.loadMoreSquareArticles()
-                }
-            }
-        })
+        binding.tvInterview.setOnClickListener {
+            Toast.makeText(requireContext(), "后续接入搜索：面试", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.tvFlutter.setOnClickListener {
+            Toast.makeText(requireContext(), "后续接入搜索：Flutter", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.tvKotlin.setOnClickListener {
+            Toast.makeText(requireContext(), "后续接入搜索：Kotlin", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun observeData() {
@@ -111,14 +118,6 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
                 }
             }
         }
-    }
-
-    private fun openWebView(article: Article) {
-        val intent = Intent(requireContext(), WebViewActivity::class.java).apply {
-            putExtra(WebViewActivity.EXTRA_TITLE, article.title)
-            putExtra(WebViewActivity.EXTRA_URL, article.link)
-        }
-        startActivity(intent)
     }
 
     override fun onDestroyView() {
