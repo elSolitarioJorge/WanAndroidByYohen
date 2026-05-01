@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_nav_graph"
+    app:startDestination="@id/home_fragment">
+
+    <fragment
+        android:id="@+id/home_fragment"
+        android:name="com.ggg.kt.wanandroidbyyohen.ui.home.HomeFragment"
+        android:label="首页"/>
+
+    <fragment
+        android:id="@+id/square_fragment"
+        android:name="com.ggg.kt.wanandroidbyyohen.ui.square.SquareFragment"
+        android:label="广场"/>
+
+    <fragment
+        android:id="@+id/project_fragment"
+        android:name="com.ggg.kt.wanandroidbyyohen.ui.project.ProjectFragment"
+        android:label="项目"/>
+
+    <fragment
+        android:id="@+id/navigation_fragment"
+        android:name="com.ggg.kt.wanandroidbyyohen.ui.navigation.NavigationFragment"
+        android:label="导航"/>
+
+    <fragment
+        android:id="@+id/mine_fragment"
+        android:name="com.ggg.kt.wanandroidbyyohen.ui.mine.MineFragment"
+        android:label="我的"/>
+</navigation>
