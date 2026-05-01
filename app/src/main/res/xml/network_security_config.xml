@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+
+    <!-- 只允许 WanAndroid 相关域名使用 HTTP 明文流量 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">wanandroid.com</domain>
+        <domain includeSubdomains="true">www.wanandroid.com</domain>
+    </domain-config>
+
+</network-security-config>
