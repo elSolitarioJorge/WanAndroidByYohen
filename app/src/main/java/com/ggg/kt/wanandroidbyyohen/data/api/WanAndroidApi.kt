@@ -4,6 +4,7 @@ import com.ggg.kt.wanandroidbyyohen.data.model.ApiResponse
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.data.model.Banner
 import com.ggg.kt.wanandroidbyyohen.data.model.Chapter
+import com.ggg.kt.wanandroidbyyohen.data.model.Navigation
 import com.ggg.kt.wanandroidbyyohen.data.model.PageResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -39,4 +40,7 @@ interface WanAndroidApi {
         @Path("page") page: Int,
         @Query("cid") cid: Int
     ): ApiResponse<PageResponse<Article>>
+
+    @GET("navi/json")
+    suspend fun getNavigationList(): ApiResponse<List<Navigation>>
 }
