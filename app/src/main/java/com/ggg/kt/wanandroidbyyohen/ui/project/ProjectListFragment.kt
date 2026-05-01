@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentProjectListBinding
-import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
 import kotlinx.coroutines.launch
 
@@ -24,8 +23,8 @@ class ProjectListFragment : Fragment() {
 
     private val viewModel: ProjectListViewModel by viewModels()
 
-    private val articleAdapter by lazy {
-        ArticleAdapter { article ->
+    private val projectAdapter by lazy {
+        ProjectAdapter { article ->
             ArticleNavigator.openArticle(requireContext(), article)
         }
     }
@@ -64,7 +63,7 @@ class ProjectListFragment : Fragment() {
 
     private fun initRecyclerView() {
         binding.rvProjects.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvProjects.adapter = articleAdapter
+        binding.rvProjects.adapter = projectAdapter
     }
 
     private fun initRefresh() {
@@ -97,9 +96,9 @@ class ProjectListFragment : Fragment() {
 
                             val data = state.data
                             if (data.isRefresh) {
-                                articleAdapter.submitList(data.articles)
+                                projectAdapter.submitList(data.articles)
                             } else {
-                                articleAdapter.addList(data.articles)
+                                projectAdapter.addList(data.articles)
                             }
                         }
 
