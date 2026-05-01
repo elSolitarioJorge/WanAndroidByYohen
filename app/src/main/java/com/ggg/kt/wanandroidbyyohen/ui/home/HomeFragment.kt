@@ -16,6 +16,7 @@ import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentHomeBinding
+import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
 import com.ggg.kt.wanandroidbyyohen.ui.webview.WebViewActivity
 import kotlinx.coroutines.launch
 
@@ -26,7 +27,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private val viewModel: HomeViewModel by viewModels()
 
     private val articleAdapter by lazy {
-        HomeArticleAdapter { article ->
+        ArticleAdapter { article ->
             openWebView(article)
         }
     }
@@ -109,7 +110,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private fun initLoadMore() {
-        binding.rvArticles.addOnScrollListener(object: RecyclerView.OnScrollListener() {
+        binding.rvArticles.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 if (dy <= 0) return

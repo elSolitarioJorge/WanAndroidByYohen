@@ -1,4 +1,4 @@
-package com.ggg.kt.wanandroidbyyohen.ui.home
+package com.ggg.kt.wanandroidbyyohen.ui.common
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -6,9 +6,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.ItemArticleBinding
 
-class HomeArticleAdapter(
+class ArticleAdapter(
     private val onItemClick: (Article) -> Unit
-) : RecyclerView.Adapter<HomeArticleAdapter.ArticleViewHolder>() {
+) : RecyclerView.Adapter<ArticleAdapter.ArticleViewHolder>() {
     private val articles = mutableListOf<Article>()
 
     fun submitList(newList: List<Article>) {
@@ -37,23 +37,36 @@ class HomeArticleAdapter(
         holder.bind(articles[position])
     }
 
-    override fun getItemCount() : Int = articles.size
+    override fun getItemCount(): Int = articles.size
 
     class ArticleViewHolder(
         private val binding: ItemArticleBinding,
         private val onItemClick: (Article) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
+
         fun bind(article: Article) {
             binding.tvTitle.text = if (article.isTop) {
                 "【置顶】${article.title}"
             } else {
                 article.title
             }
-            binding.tvInfo.text = "${article.displayAuthor()} · ${article.niceDate.orEmpty()}"
+
+            binding.tvInfo.text = buildString {
+                append(article.displayAuthor())
+                if (!article.niceDate.isNullOrBlank()) {
+                    append(" · ")
+                    append(article.niceDate)
+                }
+                if (!article.chapterName.isNullOrBlank()) {
+                    append(" · ")
+                    append(article.chapterName)
+                }
+            }
 
             binding.root.setOnClickListener {
                 onItemClick(article)
             }
         }
     }
+
 }

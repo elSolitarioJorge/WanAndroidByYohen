@@ -18,4 +18,9 @@ interface WanAndroidApi {
 
     @GET("article/top/json")
     suspend fun getTopArticles(): ApiResponse<List<Article>>
+
+    @GET("user_article/list/{page}/json")
+    suspend fun getSquareArticles(
+        @Path("page") page: Int
+    ): ApiResponse<PageResponse<Article>>
 }
