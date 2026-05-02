@@ -28,4 +28,16 @@
         android:id="@+id/mine_fragment"
         android:name="com.ggg.kt.wanandroidbyyohen.ui.mine.MineFragment"
         android:label="我的"/>
+
+    <fragment
+        android:id="@+id/system_article_list_fragment"
+        android:name="com.ggg.kt.wanandroidbyyohen.ui.navigation.SystemArticleListFragment"
+        android:label="体系文章">
+        <argument
+            android:name="arg_cid"
+            app:argType="integer" />
+        <argument
+            android:name="arg_category_name"
+            app:argType="string" />
+    </fragment>
 </navigation>

@@ -5,14 +5,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.data.model.Chapter
@@ -275,11 +277,13 @@ class NavigationFragment : Fragment() {
     }
 
     private fun openSystemArticles(chapter: Chapter) {
-        Toast.makeText(
-            requireContext(),
-            "点击体系：${chapter.name}, id=${chapter.id}",
-            Toast.LENGTH_SHORT
-        ).show()
+        findNavController().navigate(
+            R.id.system_article_list_fragment,
+            bundleOf(
+                "arg_cid" to chapter.id,
+                "arg_category_name" to chapter.name
+            )
+        )
     }
 
     private fun showLoading() {
