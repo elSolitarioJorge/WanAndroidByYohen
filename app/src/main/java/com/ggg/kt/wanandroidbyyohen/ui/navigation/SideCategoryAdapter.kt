@@ -3,51 +3,54 @@ package com.ggg.kt.wanandroidbyyohen.ui.navigation
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.ggg.kt.wanandroidbyyohen.data.model.Navigation
 import com.ggg.kt.wanandroidbyyohen.databinding.ItemNavigationCategoryBinding
 
-class NavigationCategoryAdapter(
+class SideCategoryAdapter<T>(
+    private val getTitle: (T) -> String,
     private val onItemClick: (Int) -> Unit
-) : RecyclerView.Adapter<NavigationCategoryAdapter.CategoryViewHolder>() {
-    private val categories = mutableListOf<Navigation>()
+) : RecyclerView.Adapter<SideCategoryAdapter<T>.CategoryViewHolder>() {
+    private val items = mutableListOf<T>()
     private var selectedPosition = 0
 
-    fun submitList(newList: List<Navigation>) {
-        categories.clear()
-        categories.addAll(newList)
+    fun submitList(newList: List<T>) {
+        items.clear()
+        items.addAll(newList)
         selectedPosition = 0
         notifyDataSetChanged()
     }
 
     fun select(position: Int) {
+        if (position !in items.indices) return
+
         val oldPosition = selectedPosition
         selectedPosition = position
         notifyItemChanged(oldPosition)
         notifyItemChanged(selectedPosition)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CategoryViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): CategoryViewHolder {
         val binding = ItemNavigationCategoryBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
             false
         )
-        return CategoryViewHolder(binding, onItemClick)
+        return CategoryViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: CategoryViewHolder, position: Int) {
-        holder.bind(categories[position], position == selectedPosition)
+        holder.bind(items[position], position == selectedPosition)
     }
 
-    override fun getItemCount(): Int = categories.size
+    override fun getItemCount(): Int = items.size
 
-
-    class CategoryViewHolder(
-        private val binding: ItemNavigationCategoryBinding,
-        private val onItemClick: (Int) -> Unit
+    inner class CategoryViewHolder(
+        private val binding: ItemNavigationCategoryBinding
     ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(item: Navigation, selected: Boolean) {
-            binding.tvCategory.text = item.name
+        fun bind(item: T, selected: Boolean) {
+            binding.tvCategory.text = getTitle(item)
             binding.tvCategory.setTextColor(
                 if (selected) 0xFF3B82F6.toInt() else 0xFF666666.toInt()
             )
@@ -57,8 +60,12 @@ class NavigationCategoryAdapter(
             )
 
             binding.root.setOnClickListener {
-                onItemClick(bindingAdapterPosition)
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onItemClick(position)
+                }
             }
         }
     }
+
 }

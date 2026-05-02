@@ -43,4 +43,13 @@ interface WanAndroidApi {
 
     @GET("navi/json")
     suspend fun getNavigationList(): ApiResponse<List<Navigation>>
+
+    @GET("tree/json")
+    suspend fun getSystemTree(): ApiResponse<List<Chapter>>
+
+    @GET("article/list/{page}/json")
+    suspend fun getArticleByCid(
+        @Path("page") page: Int,
+        @Query("cid") cid: Int
+    ) : ApiResponse<PageResponse<Article>>
 }

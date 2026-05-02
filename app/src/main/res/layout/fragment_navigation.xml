@@ -5,9 +5,9 @@
     android:orientation="vertical">
 
     <LinearLayout
-        android:id="@+id/layout_topTabs"
+        android:id="@+id/layout_top_tabs"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="56dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="16dp"
@@ -19,19 +19,20 @@
             android:layout_height="match_parent"
             android:gravity="center"
             android:text="导航"
-            android:textColor="#3B82F6"
-            android:textSize="16sp"
+            android:textColor="#5BAEDB"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tv_system_tab"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_marginStart="24dp"
+            android:layout_marginStart="28dp"
             android:gravity="center"
             android:text="体系"
-            android:textColor="#666666"
-            android:textSize="16sp" />
+            android:textColor="#9ACBE5"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 
@@ -54,12 +55,12 @@
                 android:background="#F7F7F7" />
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_articles"
+                android:id="@+id/rv_sections"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:padding="12dp"
-                android:clipToPadding="false" />
+                android:clipToPadding="false"
+                android:paddingTop="8dp" />
 
         </LinearLayout>
 
@@ -67,9 +68,9 @@
             android:id="@+id/tv_state"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:text="加载中..."
-            android:textSize="16sp"
-            android:layout_gravity="center" />
+            android:textSize="16sp" />
 
     </FrameLayout>
 
