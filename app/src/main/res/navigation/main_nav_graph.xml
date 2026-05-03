@@ -49,4 +49,14 @@
         android:id="@+id/search_fragment"
         android:name="com.ggg.kt.wanandroidbyyohen.ui.search.SearchFragment"
         android:label="搜索"/>
+
+    <fragment
+        android:id="@+id/share_article_fragment"
+        android:name="com.ggg.kt.wanandroidbyyohen.ui.square.ShareArticleFragment"
+        android:label="分享文章"/>
+
+    <fragment
+        android:id="@+id/my_share_fragment"
+        android:name="com.ggg.kt.wanandroidbyyohen.ui.square.MyShareFragment"
+        android:label="我的分享"/>
 </navigation>

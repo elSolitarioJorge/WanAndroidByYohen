@@ -12,28 +12,26 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
-import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
-import com.ggg.kt.wanandroidbyyohen.data.model.Article
-import com.ggg.kt.wanandroidbyyohen.databinding.FragmentSquareBinding
-import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
+import com.ggg.kt.wanandroidbyyohen.databinding.FragmentMyShareBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
 import kotlinx.coroutines.launch
 
-class SquareFragment : Fragment(R.layout.fragment_square) {
-    private var _binding: FragmentSquareBinding? = null
+class MyShareFragment : Fragment() {
+
+    private var _binding: FragmentMyShareBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: SquareViewModel by viewModels()
-    private val articleAdapter by lazy {
-        ArticleAdapter(
+    private val viewModel: MyShareViewModel by viewModels()
+
+    private val myShareAdapter by lazy {
+        MyShareAdapter(
             onItemClick = { article ->
                 ArticleNavigator.openArticle(requireContext(), article)
             },
-            onCollectClick = { article ->
-                handleCollectClick(article)
+            onDeleteClick = { article ->
+                viewModel.deleteArticle(article)
             }
         )
     }
@@ -43,72 +41,50 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentSquareBinding.inflate(inflater, container, false)
+        _binding = FragmentMyShareBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        initToolbar()
         initRecyclerView()
         initRefresh()
         initLoadMore()
-        initTags()
-        initClick()
         observeData()
-        observeCollectState()
-        viewModel.refreshSquareArticles()
+        observeDelete()
+
+        viewModel.refresh()
+    }
+
+    private fun initToolbar() {
+        binding.btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
     }
 
     private fun initRecyclerView() {
-        binding.rvSquareArticles.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvSquareArticles.adapter = articleAdapter
+        binding.rvArticles.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvArticles.adapter = myShareAdapter
     }
 
     private fun initRefresh() {
         binding.swipeRefresh.setOnRefreshListener {
-            viewModel.refreshSquareArticles()
+            viewModel.refresh()
         }
     }
 
     private fun initLoadMore() {
-        binding.rvSquareArticles.addLoadMoreListener {
-            viewModel.loadMoreSquareArticles()
-        }
-    }
-
-    private fun initClick() {
-        binding.btnShareArticle.setOnClickListener {
-            if (!UserStore.isLogin()) {
-                findNavController().navigate(R.id.login_fragment)
-                return@setOnClickListener
-            }
-
-            findNavController().navigate(R.id.share_article_fragment)
-        }
-    }
-
-    private fun initTags() {
-        binding.tvLatest.setOnClickListener {
-            viewModel.refreshSquareArticles()
-        }
-
-        binding.tvInterview.setOnClickListener {
-            Toast.makeText(requireContext(), "后续接入搜索：面试", Toast.LENGTH_SHORT).show()
-        }
-
-        binding.tvFlutter.setOnClickListener {
-            Toast.makeText(requireContext(), "后续接入搜索：Flutter", Toast.LENGTH_SHORT).show()
-        }
-
-        binding.tvKotlin.setOnClickListener {
-            Toast.makeText(requireContext(), "后续接入搜索：Kotlin", Toast.LENGTH_SHORT).show()
+        binding.rvArticles.addLoadMoreListener {
+            viewModel.loadMore()
         }
     }
 
     private fun observeData() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.squareState.collect { state ->
+                viewModel.myShareState.collect { state ->
                     when (state) {
                         is UiState.Loading -> {
                             if (!binding.swipeRefresh.isRefreshing) {
@@ -118,15 +94,20 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
                         }
 
                         is UiState.Success -> {
-                            binding.tvState.visibility = View.GONE
                             binding.swipeRefresh.isRefreshing = false
+                            binding.tvState.visibility = View.GONE
 
-                            val squareData = state.data
+                            val data = state.data
 
-                            if (squareData.isRefresh) {
-                                articleAdapter.submitList(squareData.articles)
+                            if (data.isRefresh) {
+                                myShareAdapter.submitList(data.articles)
                             } else {
-                                articleAdapter.addList(squareData.articles)
+                                myShareAdapter.addList(data.articles)
+                            }
+
+                            if (data.isRefresh && data.articles.isEmpty()) {
+                                binding.tvState.visibility = View.VISIBLE
+                                binding.tvState.text = "暂无分享"
                             }
                         }
 
@@ -141,18 +122,21 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
         }
     }
 
-    private fun observeCollectState() {
+    private fun observeDelete() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.collectState.collect { state ->
+                viewModel.deleteState.collect { state ->
                     when (state) {
                         null -> Unit
                         is UiState.Loading -> Unit
 
                         is UiState.Success -> {
-                            val articleId = state.data.first
-                            val collect = state.data.second
-                            articleAdapter.updateCollectState(articleId, collect)
+                            myShareAdapter.removeArticle(state.data.id)
+                            Toast.makeText(
+                                requireContext(),
+                                "删除成功",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
 
                         is UiState.Error -> {
@@ -166,15 +150,6 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
                 }
             }
         }
-    }
-
-    private fun handleCollectClick(article: Article) {
-        if (!UserStore.isLogin()) {
-            findNavController().navigate(R.id.login_fragment)
-            return
-        }
-
-        viewModel.toggleCollect(article)
     }
 
     override fun onDestroyView() {

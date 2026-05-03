@@ -51,6 +51,14 @@
             android:text="我的收藏"
             android:visibility="gone" />
 
+        <Button
+            android:id="@+id/btn_my_share"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="12dp"
+            android:text="我的分享"
+            android:visibility="gone" />
+
     </LinearLayout>
 
     <TextView

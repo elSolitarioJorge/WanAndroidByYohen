@@ -5,6 +5,7 @@ import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.data.model.Banner
 import com.ggg.kt.wanandroidbyyohen.data.model.Chapter
 import com.ggg.kt.wanandroidbyyohen.data.model.HotKey
+import com.ggg.kt.wanandroidbyyohen.data.model.MyShareResponse
 import com.ggg.kt.wanandroidbyyohen.data.model.Navigation
 import com.ggg.kt.wanandroidbyyohen.data.model.PageResponse
 import com.ggg.kt.wanandroidbyyohen.data.model.User
@@ -111,4 +112,21 @@ interface WanAndroidApi {
         @Path("page") page: Int,
         @Field("k") keyword: String
     ): ApiResponse<PageResponse<Article>>
+
+    @FormUrlEncoded
+    @POST("lg/user_article/add/json")
+    suspend fun shareArticle(
+        @Field("title") title: String,
+        @Field("link") link: String
+    ): ApiResponse<Any>
+
+    @GET("user/lg/private_articles/{page}/json")
+    suspend fun getMyShareArticles(
+        @Path("page") page: Int
+    ): ApiResponse<MyShareResponse>
+
+    @POST("lg/user_article/delete/{id}/json")
+    suspend fun deleteMyShareArticle(
+        @Path("id") id: Int
+    ): ApiResponse<Any>
 }

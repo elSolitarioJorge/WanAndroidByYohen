@@ -54,6 +54,10 @@ class MineFragment : Fragment(R.layout.fragment_mine) {
         binding.btnCollect.setOnClickListener {
             findNavController().navigate(R.id.collect_article_fragment)
         }
+
+        binding.btnMyShare.setOnClickListener {
+            findNavController().navigate(R.id.my_share_fragment)
+        }
     }
 
     private fun observeData() {
@@ -93,6 +97,7 @@ class MineFragment : Fragment(R.layout.fragment_mine) {
                             binding.btnLogin.visibility = View.GONE
                             binding.btnLogout.visibility = View.VISIBLE
                             binding.btnCollect.visibility = View.VISIBLE
+                            binding.btnMyShare.visibility = View.VISIBLE
                         }
 
                         is UiState.Error -> {
@@ -102,6 +107,7 @@ class MineFragment : Fragment(R.layout.fragment_mine) {
                             binding.btnLogin.visibility = View.VISIBLE
                             binding.btnLogout.visibility = View.GONE
                             binding.btnCollect.visibility = View.GONE
+                            binding.btnMyShare.visibility = View.GONE
                         }
                     }
                 }
@@ -130,6 +136,7 @@ class MineFragment : Fragment(R.layout.fragment_mine) {
                             binding.btnLogin.visibility = View.VISIBLE
                             binding.btnLogout.visibility = View.GONE
                             binding.btnCollect.visibility = View.GONE
+                            binding.btnMyShare.visibility = View.GONE
                         }
 
                         is UiState.Error -> {
