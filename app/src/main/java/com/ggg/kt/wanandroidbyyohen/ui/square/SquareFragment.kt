@@ -25,9 +25,11 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
 
     private val viewModel: SquareViewModel by viewModels()
     private val articleAdapter by lazy {
-        ArticleAdapter { article ->
-            ArticleNavigator.openArticle(requireContext(), article)
-        }
+        ArticleAdapter(
+            onItemClick = { article ->
+                ArticleNavigator.openArticle(requireContext(), article)
+            }
+        )
     }
 
     override fun onCreateView(

@@ -25,9 +25,11 @@ class SystemArticleListFragment : Fragment() {
     private val viewModel: SystemArticleListViewModel by viewModels()
 
     private val articleAdapter by lazy {
-        ArticleAdapter { article ->
-            ArticleNavigator.openArticle(requireContext(), article)
-        }
+        ArticleAdapter(
+            onItemClick = { article ->
+                ArticleNavigator.openArticle(requireContext(), article)
+            }
+        )
     }
 
     private val cid: Int by lazy {

@@ -1,13 +1,15 @@
 package com.ggg.kt.wanandroidbyyohen.ui.common
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.ItemArticleBinding
 
 class ArticleAdapter(
-    private val onItemClick: (Article) -> Unit
+    private val onItemClick: (Article) -> Unit,
+    private val onCollectClick: ((Article) -> Unit)? = null
 ) : RecyclerView.Adapter<ArticleAdapter.ArticleViewHolder>() {
     private val articles = mutableListOf<Article>()
 
@@ -19,9 +21,18 @@ class ArticleAdapter(
 
     fun addList(newList: List<Article>) {
         if (newList.isEmpty()) return
+
         val startPosition = articles.size
         articles.addAll(newList)
-        notifyItemRangeChanged(startPosition, newList.size)
+        notifyItemRangeInserted(startPosition, newList.size)
+    }
+
+    fun updateCollectState(articleId: Int, collect: Boolean) {
+        val index = articles.indexOfFirst { it.id == articleId }
+        if (index == -1) return
+
+        articles[index] = articles[index].copy(collect = collect)
+        notifyItemChanged(index)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArticleViewHolder {
@@ -30,7 +41,11 @@ class ArticleAdapter(
             parent,
             false
         )
-        return ArticleViewHolder(binding, onItemClick)
+        return ArticleViewHolder(
+            binding = binding,
+            onItemClick = onItemClick,
+            onCollectClick = onCollectClick
+        )
     }
 
     override fun onBindViewHolder(holder: ArticleViewHolder, position: Int) {
@@ -41,7 +56,8 @@ class ArticleAdapter(
 
     class ArticleViewHolder(
         private val binding: ItemArticleBinding,
-        private val onItemClick: (Article) -> Unit
+        private val onItemClick: (Article) -> Unit,
+        private val onCollectClick: ((Article) -> Unit)?
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(article: Article) {
@@ -63,8 +79,27 @@ class ArticleAdapter(
                 }
             }
 
+            binding.btnCollect.text = if (article.collect) "♥" else "♡"
+            binding.btnCollect.setTextColor(
+                if (article.collect) {
+                    0xFFE91E63.toInt()
+                } else {
+                    0xFF999999.toInt()
+                }
+            )
+
             binding.root.setOnClickListener {
                 onItemClick(article)
+            }
+
+            binding.btnCollect.visibility = if (onCollectClick == null) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
+
+            binding.btnCollect.setOnClickListener {
+                onCollectClick?.invoke(article)
             }
         }
     }

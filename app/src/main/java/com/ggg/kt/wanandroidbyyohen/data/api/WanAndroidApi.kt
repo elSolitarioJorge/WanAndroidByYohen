@@ -78,4 +78,14 @@ interface WanAndroidApi {
 
     @GET("user/lg/userinfo/json")
     suspend fun getUserInfo(): ApiResponse<UserInfoData>
+
+    @POST("lg/collect/{id}/json")
+    suspend fun collectArticle(
+        @Path("id") id: Int
+    ): ApiResponse<Any>
+
+    @POST("lg/uncollect_originId/{id}/json")
+    suspend fun uncollectArticle(
+        @Path("id") id: Int
+    ): ApiResponse<Any>
 }

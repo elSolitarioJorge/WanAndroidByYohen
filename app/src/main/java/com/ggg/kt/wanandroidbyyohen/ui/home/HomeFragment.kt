@@ -4,15 +4,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
+import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
+import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentHomeBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
@@ -25,9 +29,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private val viewModel: HomeViewModel by viewModels()
 
     private val articleAdapter by lazy {
-        ArticleAdapter { article ->
-            ArticleNavigator.openArticle(requireContext(), article)
-        }
+        ArticleAdapter(
+            onItemClick = { article ->
+                ArticleNavigator.openArticle(requireContext(), article)
+            },
+            onCollectClick = { article ->
+                handleCollectClick(article)
+            }
+        )
     }
 
     override fun onCreateView(
@@ -46,6 +55,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         observeData()
         initRefresh()
         initLoadMore()
+        observeCollectState()
         viewModel.refreshHomeData()
     }
 
@@ -102,6 +112,43 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun initLoadMore() {
         binding.rvArticles.addLoadMoreListener {
             viewModel.loadMoreArticles()
+        }
+    }
+
+    private fun handleCollectClick(article: Article) {
+        if (!UserStore.isLogin()) {
+            findNavController().navigate(R.id.login_fragment)
+            return
+        }
+
+        viewModel.toggleCollect(article)
+    }
+
+    private fun observeCollectState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.collectState.collect { state ->
+                    when (state) {
+                        null -> Unit
+
+                        is UiState.Loading -> Unit
+
+                        is UiState.Success -> {
+                            val articleId = state.data.first
+                            val collect = state.data.second
+                            articleAdapter.updateCollectState(articleId, collect)
+                        }
+
+                        is UiState.Error -> {
+                            Toast.makeText(
+                                requireContext(),
+                                state.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            }
         }
     }
 
