@@ -72,11 +72,20 @@ class MineFragment : Fragment(R.layout.fragment_mine) {
                         is UiState.Success -> {
                             binding.tvState.visibility = View.GONE
 
-                            val userInfo = state.data.userInfo
-                            val coinInfo = state.data.coinInfo
+                            val userInfo = state.data.userInfoData.userInfo
+                            val coinInfo = state.data.userInfoData.coinInfo
+
                             binding.tvUsername.text = userInfo?.username ?: "已登录"
+
+                            val sourceText = if (state.data.isFromLocal) {
+                                "本地缓存"
+                            } else {
+                                "已同步"
+                            }
+
                             binding.tvUserInfo.text =
-                                "积分：${coinInfo?.coinCount ?: 0}  等级：${coinInfo?.level ?: 0}  排名：${coinInfo?.rank ?: "-"}"
+                                "积分：${coinInfo?.coinCount ?: 0}  等级：${coinInfo?.level ?: 0}  排名：${coinInfo?.rank ?: "-"}  $sourceText"
+
                             binding.btnLogin.visibility = View.GONE
                             binding.btnLogout.visibility = View.VISIBLE
                         }

@@ -2,6 +2,7 @@ package com.ggg.kt.wanandroidbyyohen.data.repository
 
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.network.RetrofitClient
+import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
 import com.ggg.kt.wanandroidbyyohen.data.model.User
 import com.ggg.kt.wanandroidbyyohen.data.model.UserInfoData
 
@@ -13,7 +14,9 @@ class UserRepository {
         return try {
             val response = RetrofitClient.api.login(username, password)
             if (response.errorCode == 0) {
-                UiState.Success(response.data ?: User(username = username))
+                val user = response.data ?: User(username = username)
+                UserStore.saveLoginUser(user)
+                UiState.Success(user)
             } else {
                 UiState.Error(response.errorMsg.ifBlank { "登录失败" })
             }
@@ -46,6 +49,7 @@ class UserRepository {
             if (response.errorCode == 0) {
                 val data = response.data
                 if (data != null) {
+                    UserStore.saveUserInfo(data)
                     UiState.Success(data)
                 } else {
                     UiState.Error("用户信息为空")
@@ -60,15 +64,19 @@ class UserRepository {
 
     suspend fun logout(): UiState<Any> {
         return try {
-            val response = RetrofitClient.api.logout()
-            if (response.errorCode == 0) {
-                RetrofitClient.cookieJar.clear()
-                UiState.Success(Any())
-            } else {
-                UiState.Error(response.errorMsg.ifBlank { "退出登录失败" })
-            }
+            RetrofitClient.cookieJar.clear()
+            UserStore.clear()
+            UiState.Success(Any())
         } catch (e: Exception) {
-            UiState.Error(e.message ?: "网络异常")
+            UiState.Error(e.message ?: "退出登录失败")
         }
+    }
+
+    fun getLocalUserInfo(): UserInfoData? {
+        return UserStore.getLocalUserInfo()
+    }
+
+    fun isLoginLocal(): Boolean {
+        return UserStore.isLogin()
     }
 }
