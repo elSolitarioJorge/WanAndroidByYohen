@@ -1,7 +1,9 @@
 package com.ggg.kt.wanandroidbyyohen.app
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.ggg.kt.wanandroidbyyohen.R
@@ -20,5 +22,24 @@ class MainActivity : AppCompatActivity() {
 
         val navController = navHostFragment.navController
         binding.bottomNav.setupWithNavController(navController)
+        setupBottomNavVisibility(navController)
+    }
+
+    private fun setupBottomNavVisibility(navController: NavController) {
+        val topLevelDestinations = setOf(
+            R.id.home_fragment,
+            R.id.square_fragment,
+            R.id.project_fragment,
+            R.id.navigation_fragment,
+            R.id.mine_fragment
+        )
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            binding.bottomNav.visibility = if(destination.id in topLevelDestinations) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+        }
     }
 }
