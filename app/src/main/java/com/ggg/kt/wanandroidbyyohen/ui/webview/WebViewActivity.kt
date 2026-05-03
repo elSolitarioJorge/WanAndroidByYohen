@@ -33,7 +33,7 @@ class WebViewActivity : AppCompatActivity() {
     private fun initToolbar() {
         binding.toolbar.applyStatusBarPadding()
         binding.tvTitle.text = titleText.ifBlank { "文章详情" }
-        binding.ivBack.setOnClickListener {
+        binding.btnBack.setOnClickListener {
             finish()
         }
     }

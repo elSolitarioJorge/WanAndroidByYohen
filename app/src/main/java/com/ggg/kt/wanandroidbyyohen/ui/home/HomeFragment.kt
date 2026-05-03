@@ -55,10 +55,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         observeData()
         initRefresh()
         initLoadMore()
+        initClick()
         observeCollectState()
         viewModel.refreshHomeData()
     }
 
+    private fun initClick() {
+        binding.tvSearchEntry.setOnClickListener {
+            findNavController().navigate(R.id.search_fragment)
+        }
+    }
 
     private fun initRecyclerView() {
         binding.rvArticles.layoutManager = LinearLayoutManager(requireContext())

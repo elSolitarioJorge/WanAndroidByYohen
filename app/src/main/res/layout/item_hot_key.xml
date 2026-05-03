@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tv_hot_key"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_tag"
+    android:gravity="center"
+    android:minHeight="38dp"
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp"
+    android:text="热搜词"
+    android:textColor="#5BAEDB"
+    android:textSize="14sp" />

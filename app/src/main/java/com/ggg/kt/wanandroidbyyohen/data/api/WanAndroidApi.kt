@@ -4,6 +4,7 @@ import com.ggg.kt.wanandroidbyyohen.data.model.ApiResponse
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.data.model.Banner
 import com.ggg.kt.wanandroidbyyohen.data.model.Chapter
+import com.ggg.kt.wanandroidbyyohen.data.model.HotKey
 import com.ggg.kt.wanandroidbyyohen.data.model.Navigation
 import com.ggg.kt.wanandroidbyyohen.data.model.PageResponse
 import com.ggg.kt.wanandroidbyyohen.data.model.User
@@ -100,4 +101,14 @@ interface WanAndroidApi {
         @Path("id") id: Int,
         @Field("originId") originId: Int
     ): ApiResponse<Any>
+
+    @GET("hotkey/json")
+    suspend fun getHotKeys(): ApiResponse<List<HotKey>>
+
+    @FormUrlEncoded
+    @POST("article/query/{page}/json")
+    suspend fun searchArticles(
+        @Path("page") page: Int,
+        @Field("k") keyword: String
+    ): ApiResponse<PageResponse<Article>>
 }

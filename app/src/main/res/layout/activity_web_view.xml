@@ -16,7 +16,7 @@
         android:background="#FFFFFF">
 
         <ImageView
-            android:id="@+id/iv_back"
+            android:id="@+id/btn_back"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:gravity="center"
