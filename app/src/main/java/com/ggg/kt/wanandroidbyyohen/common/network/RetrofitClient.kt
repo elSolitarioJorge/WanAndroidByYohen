@@ -9,11 +9,14 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitClient {
     private const val BASE_URL = "https://wanandroid.com/"
 
+    val cookieJar = PersistentCookieJar()
+
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
     private val okHttpClient = OkHttpClient.Builder()
+        .cookieJar(cookieJar)
         .addInterceptor(loggingInterceptor)
         .build()
 
