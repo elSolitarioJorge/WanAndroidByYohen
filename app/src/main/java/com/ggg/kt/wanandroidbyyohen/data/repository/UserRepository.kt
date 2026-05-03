@@ -2,6 +2,7 @@ package com.ggg.kt.wanandroidbyyohen.data.repository
 
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.network.RetrofitClient
+import com.ggg.kt.wanandroidbyyohen.common.network.safeApiCall
 import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
 import com.ggg.kt.wanandroidbyyohen.data.model.User
 import com.ggg.kt.wanandroidbyyohen.data.model.UserInfoData
@@ -11,17 +12,22 @@ class UserRepository {
         username: String,
         password: String
     ): UiState<User> {
-        return try {
-            val response = RetrofitClient.api.login(username, password)
-            if (response.errorCode == 0) {
-                val user = response.data ?: User(username = username)
+        return when (
+            val result = safeApiCall(
+                defaultErrorMessage = "登录失败"
+            ) {
+                RetrofitClient.api.login(username, password)
+            }
+        ) {
+            is UiState.Success -> {
+                val user = result.data
                 UserStore.saveLoginUser(user)
                 UiState.Success(user)
-            } else {
-                UiState.Error(response.errorMsg.ifBlank { "登录失败" })
             }
-        } catch (e: Exception) {
-            UiState.Error(e.message ?: "网络异常")
+
+            is UiState.Error -> UiState.Error(result.message)
+
+            is UiState.Loading -> UiState.Loading
         }
     }
 
@@ -30,39 +36,41 @@ class UserRepository {
         password: String,
         repassword: String
     ): UiState<User> {
-        return try {
-            val response = RetrofitClient.api.register(username, password, repassword)
-
-            if (response.errorCode == 0) {
-                UiState.Success(response.data ?: User(username = username))
-            } else {
-                UiState.Error(response.errorMsg.ifBlank { "注册失败" })
+        return when (
+            val result = safeApiCall(
+                defaultErrorMessage = "注册失败"
+            ) {
+                RetrofitClient.api.register(username, password, repassword)
             }
-        } catch (e: Exception) {
-            UiState.Error(e.message ?: "网络请求")
+        ) {
+            is UiState.Success -> UiState.Success(result.data)
+
+            is UiState.Error -> UiState.Error(result.message)
+
+            is UiState.Loading -> UiState.Loading
         }
     }
 
     suspend fun getUserInfo(): UiState<UserInfoData> {
-        return try {
-            val response = RetrofitClient.api.getUserInfo()
-            if (response.errorCode == 0) {
-                val data = response.data
-                if (data != null) {
-                    UserStore.saveUserInfo(data)
-                    UiState.Success(data)
-                } else {
-                    UiState.Error("用户信息为空")
-                }
-            } else {
-                UiState.Error(response.errorMsg.ifBlank { "获取用户信息失败" })
+        return when (
+            val result = safeApiCall(
+                defaultErrorMessage = "获取用户信息失败"
+            ) {
+                RetrofitClient.api.getUserInfo()
             }
-        } catch (e: Exception) {
-            UiState.Error(e.message ?: "网络异常")
+        ) {
+            is UiState.Success -> {
+                UserStore.saveUserInfo(result.data)
+                UiState.Success(result.data)
+            }
+
+            is UiState.Error -> UiState.Error(result.message)
+
+            is UiState.Loading -> UiState.Loading
         }
     }
 
-    suspend fun logout(): UiState<Any> {
+    fun logout(): UiState<Any> {
         return try {
             RetrofitClient.cookieJar.clear()
             UserStore.clear()

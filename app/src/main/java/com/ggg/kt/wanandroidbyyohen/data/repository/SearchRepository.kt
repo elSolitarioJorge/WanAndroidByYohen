@@ -2,20 +2,16 @@ package com.ggg.kt.wanandroidbyyohen.data.repository
 
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.network.RetrofitClient
+import com.ggg.kt.wanandroidbyyohen.common.network.safeApiCall
 import com.ggg.kt.wanandroidbyyohen.data.model.HotKey
 import com.ggg.kt.wanandroidbyyohen.data.model.SearchArticleData
 
 class SearchRepository {
     suspend fun getHotKeys(): UiState<List<HotKey>> {
-        return try {
-            val response = RetrofitClient.api.getHotKeys()
-            if (response.errorCode == 0) {
-                UiState.Success(response.data.orEmpty())
-            } else {
-                UiState.Error(response.errorMsg.ifBlank { "热搜词请求失败" })
-            }
-        } catch (e: Exception) {
-            UiState.Error(e.message ?: "网络异常")
+        return safeApiCall(
+            defaultErrorMessage = "热搜词请求失败"
+        ) {
+            RetrofitClient.api.getHotKeys()
         }
     }
 
@@ -24,27 +20,31 @@ class SearchRepository {
         keyword: String,
         isRefresh: Boolean
     ): UiState<SearchArticleData> {
-        return try {
-            val response = RetrofitClient.api.searchArticles(
-                page = page,
-                keyword = keyword
-            )
+        return when (
+            val result = safeApiCall(
+                defaultErrorMessage = "搜索失败"
+            ) {
+                RetrofitClient.api.searchArticles(
+                    page = page,
+                    keyword = keyword
+                )
+            }
+        ) {
+            is UiState.Success -> {
+                val pageData = result.data
 
-            if (response.errorCode != 0) {
-                return UiState.Error(response.errorMsg.ifBlank { "搜索失败" })
+                UiState.Success(
+                    SearchArticleData(
+                        articles = pageData.datas,
+                        isRefresh = isRefresh,
+                        hasMore = !pageData.over
+                    )
+                )
             }
 
-            val pageData = response.data
+            is UiState.Error -> UiState.Error(result.message)
 
-            UiState.Success(
-                SearchArticleData(
-                    articles = pageData?.datas.orEmpty(),
-                    isRefresh = isRefresh,
-                    hasMore = pageData?.over != true
-                )
-            )
-        } catch (e: Exception) {
-            UiState.Error(e.message ?: "网络异常")
+            is UiState.Loading -> UiState.Loading
         }
     }
 }
