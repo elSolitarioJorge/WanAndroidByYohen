@@ -11,7 +11,8 @@ import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.ItemProjectBinding
 
 class ProjectAdapter(
-    private val onItemClick: (Article) -> Unit
+    private val onItemClick: (Article) -> Unit,
+    private val onCollectClick: ((Article) -> Unit)? = null
 ) : RecyclerView.Adapter<ProjectAdapter.ProjectViewHolder>() {
 
     private val projects = mutableListOf<Article>()
@@ -24,9 +25,18 @@ class ProjectAdapter(
 
     fun addList(newList: List<Article>) {
         if (newList.isEmpty()) return
+
         val startPosition = projects.size
         projects.addAll(newList)
         notifyItemRangeInserted(startPosition, newList.size)
+    }
+
+    fun updateCollectState(articleId: Int, collect: Boolean) {
+        val index = projects.indexOfFirst { it.id == articleId }
+        if (index == -1) return
+
+        projects[index] = projects[index].copy(collect = collect)
+        notifyItemChanged(index)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProjectViewHolder {
@@ -35,7 +45,12 @@ class ProjectAdapter(
             parent,
             false
         )
-        return ProjectViewHolder(binding, onItemClick)
+
+        return ProjectViewHolder(
+            binding = binding,
+            onItemClick = onItemClick,
+            onCollectClick = onCollectClick
+        )
     }
 
     override fun onBindViewHolder(holder: ProjectViewHolder, position: Int) {
@@ -46,8 +61,10 @@ class ProjectAdapter(
 
     class ProjectViewHolder(
         private val binding: ItemProjectBinding,
-        private val onItemClick: (Article) -> Unit
+        private val onItemClick: (Article) -> Unit,
+        private val onCollectClick: ((Article) -> Unit)?
     ) : RecyclerView.ViewHolder(binding.root) {
+
         fun bind(article: Article) {
             binding.tvAuthor.text = article.displayAuthor()
             binding.tvTitle.text = article.title
@@ -60,8 +77,21 @@ class ProjectAdapter(
                 error(android.R.drawable.ic_menu_report_image)
             }
 
+            binding.tvCollect.text = if (article.collect) "♥" else "♡"
+            binding.tvCollect.setTextColor(
+                if (article.collect) {
+                    0xFFE91E63.toInt()
+                } else {
+                    0xFF999999.toInt()
+                }
+            )
+
             binding.root.setOnClickListener {
                 onItemClick(article)
+            }
+
+            binding.tvCollect.setOnClickListener {
+                onCollectClick?.invoke(article)
             }
         }
     }

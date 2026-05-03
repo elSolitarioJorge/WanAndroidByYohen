@@ -4,15 +4,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
+import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
+import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentProjectListBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
 import kotlinx.coroutines.launch
@@ -24,9 +29,14 @@ class ProjectListFragment : Fragment() {
     private val viewModel: ProjectListViewModel by viewModels()
 
     private val projectAdapter by lazy {
-        ProjectAdapter { article ->
-            ArticleNavigator.openArticle(requireContext(), article)
-        }
+        ProjectAdapter(
+            onItemClick = { article ->
+                ArticleNavigator.openArticle(requireContext(), article)
+            },
+            onCollectClick = { article ->
+                handleCollectClick(article)
+            }
+        )
     }
 
     private val projectTab: ProjectTab by lazy {
@@ -57,6 +67,7 @@ class ProjectListFragment : Fragment() {
         initRefresh()
         initLoadMore()
         observeData()
+        observeCollectState()
 
         viewModel.refresh()
     }
@@ -106,6 +117,43 @@ class ProjectListFragment : Fragment() {
                             binding.swipeRefresh.isRefreshing = false
                             binding.tvState.visibility = View.VISIBLE
                             binding.tvState.text = state.message
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleCollectClick(article: Article) {
+        if (!UserStore.isLogin()) {
+            findNavController().navigate(R.id.login_fragment)
+            return
+        }
+
+        viewModel.toggleCollect(article)
+    }
+
+    private fun observeCollectState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.collectState.collect { state ->
+                    when (state) {
+                        null -> Unit
+
+                        is UiState.Loading -> Unit
+
+                        is UiState.Success -> {
+                            val articleId = state.data.first
+                            val collect = state.data.second
+                            projectAdapter.updateCollectState(articleId, collect)
+                        }
+
+                        is UiState.Error -> {
+                            Toast.makeText(
+                                requireContext(),
+                                state.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
                 }

@@ -3,7 +3,9 @@ package com.ggg.kt.wanandroidbyyohen.ui.project
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
+import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.data.model.ProjectListData
+import com.ggg.kt.wanandroidbyyohen.data.repository.CollectRepository
 import com.ggg.kt.wanandroidbyyohen.data.repository.ProjectRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,6 +14,10 @@ import kotlinx.coroutines.launch
 class ProjectListViewModel : ViewModel() {
 
     private val repository = ProjectRepository()
+    private val collectRepository = CollectRepository()
+
+    private val _collectState = MutableStateFlow<UiState<Pair<Int, Boolean>>?>(null)
+    val collectState: StateFlow<UiState<Pair<Int, Boolean>>?> = _collectState
 
     private val _projectListState =
         MutableStateFlow<UiState<ProjectListData>>(UiState.Loading)
@@ -98,6 +104,24 @@ class ProjectListViewModel : ViewModel() {
                     cid = cid,
                     isRefresh = isRefresh
                 )
+            }
+        }
+    }
+
+    fun toggleCollect(article: Article) {
+        viewModelScope.launch {
+            _collectState.value = UiState.Loading
+
+            val result = if (article.collect) {
+                collectRepository.uncollectArticle(article.id)
+            } else {
+                collectRepository.collectArticle(article.id)
+            }
+
+            _collectState.value = when (result) {
+                is UiState.Success -> UiState.Success(article.id to !article.collect)
+                is UiState.Error -> UiState.Error(result.message)
+                is UiState.Loading -> UiState.Loading
             }
         }
     }
