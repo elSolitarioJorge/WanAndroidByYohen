@@ -10,10 +10,13 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
+import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
+import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentSquareBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
@@ -28,6 +31,9 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
         ArticleAdapter(
             onItemClick = { article ->
                 ArticleNavigator.openArticle(requireContext(), article)
+            },
+            onCollectClick = { article ->
+                handleCollectClick(article)
             }
         )
     }
@@ -48,6 +54,7 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
         initLoadMore()
         initTags()
         observeData()
+        observeCollectState()
         viewModel.refreshSquareArticles()
     }
 
@@ -120,6 +127,42 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
                 }
             }
         }
+    }
+
+    private fun observeCollectState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.collectState.collect { state ->
+                    when (state) {
+                        null -> Unit
+                        is UiState.Loading -> Unit
+
+                        is UiState.Success -> {
+                            val articleId = state.data.first
+                            val collect = state.data.second
+                            articleAdapter.updateCollectState(articleId, collect)
+                        }
+
+                        is UiState.Error -> {
+                            Toast.makeText(
+                                requireContext(),
+                                state.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleCollectClick(article: Article) {
+        if (!UserStore.isLogin()) {
+            findNavController().navigate(R.id.login_fragment)
+            return
+        }
+
+        viewModel.toggleCollect(article)
     }
 
     override fun onDestroyView() {
