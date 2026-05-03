@@ -88,4 +88,16 @@ interface WanAndroidApi {
     suspend fun uncollectArticle(
         @Path("id") id: Int
     ): ApiResponse<Any>
+
+    @GET("lg/collect/list/{page}/json")
+    suspend fun getCollectArticles(
+        @Path("page") page: Int
+    ): ApiResponse<PageResponse<Article>>
+
+    @FormUrlEncoded
+    @POST("lg/uncollect/{id}/json")
+    suspend fun uncollectArticleFromMine(
+        @Path("id") id: Int,
+        @Field("originId") originId: Int
+    ): ApiResponse<Any>
 }

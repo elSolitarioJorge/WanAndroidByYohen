@@ -104,4 +104,11 @@ class ArticleAdapter(
         }
     }
 
+    fun removeArticle(articleId: Int) {
+        val index = articles.indexOfFirst { it.id == articleId }
+        if (index == -1) return
+
+        articles.removeAt(index)
+        notifyItemRemoved(index)
+    }
 }

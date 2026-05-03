@@ -50,6 +50,10 @@ class MineFragment : Fragment(R.layout.fragment_mine) {
         binding.btnLogout.setOnClickListener {
             viewModel.logout()
         }
+
+        binding.btnCollect.setOnClickListener {
+            findNavController().navigate(R.id.collect_article_fragment)
+        }
     }
 
     private fun observeData() {
@@ -88,6 +92,7 @@ class MineFragment : Fragment(R.layout.fragment_mine) {
 
                             binding.btnLogin.visibility = View.GONE
                             binding.btnLogout.visibility = View.VISIBLE
+                            binding.btnCollect.visibility = View.VISIBLE
                         }
 
                         is UiState.Error -> {
@@ -96,6 +101,7 @@ class MineFragment : Fragment(R.layout.fragment_mine) {
                             binding.tvUserInfo.text = "登录后查看积分和收藏"
                             binding.btnLogin.visibility = View.VISIBLE
                             binding.btnLogout.visibility = View.GONE
+                            binding.btnCollect.visibility = View.GONE
                         }
                     }
                 }
@@ -123,6 +129,7 @@ class MineFragment : Fragment(R.layout.fragment_mine) {
 
                             binding.btnLogin.visibility = View.VISIBLE
                             binding.btnLogout.visibility = View.GONE
+                            binding.btnCollect.visibility = View.GONE
                         }
 
                         is UiState.Error -> {

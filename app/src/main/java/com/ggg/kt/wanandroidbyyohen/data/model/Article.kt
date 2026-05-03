@@ -2,6 +2,7 @@ package com.ggg.kt.wanandroidbyyohen.data.model
 
 data class Article(
     val id: Int,
+    val originId: Int = -1,
     val title: String,
     val link: String,
     val author: String?,
