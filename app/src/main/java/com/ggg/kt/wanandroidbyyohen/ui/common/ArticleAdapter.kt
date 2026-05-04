@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.ggg.kt.wanandroidbyyohen.R
+import com.ggg.kt.wanandroidbyyohen.common.extension.toHighlightText
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.ItemArticleBinding
 
@@ -72,7 +73,7 @@ class ArticleAdapter(
             binding.tvTagTop.visibility = if (article.isTop) View.VISIBLE else View.GONE
             binding.tvTagCategory.text = if (!article.chapterName.isNullOrBlank()) article.chapterName else "未知"
             binding.tvCategory.text = if (!article.superChapterName.isNullOrBlank()) article.superChapterName else "未知"
-            binding.tvTitle.text = article.title
+            binding.tvTitle.text = article.title.toHighlightText()
             binding.tvTime.text = if (!article.niceDate.isNullOrBlank()) article.niceDate else "未知"
 
             bindCollect(article)
