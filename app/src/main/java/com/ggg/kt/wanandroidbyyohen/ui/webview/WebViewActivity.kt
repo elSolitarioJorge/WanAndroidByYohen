@@ -2,6 +2,9 @@ package com.ggg.kt.wanandroidbyyohen.ui.webview
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.view.View
+import android.webkit.WebChromeClient
+import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -33,7 +36,8 @@ class WebViewActivity : AppCompatActivity() {
     }
 
     private fun initToolbar() {
-        binding.toolbar.applyTopBarInsets()
+        binding.layoutToolbar.applyTopBarInsets()
+        binding.tvTitle.isSelected = true
         binding.tvTitle.text = titleText.ifBlank { "文章详情" }
         binding.btnBack.setOnClickListener {
             finish()
@@ -46,6 +50,17 @@ class WebViewActivity : AppCompatActivity() {
         binding.webView.settings.domStorageEnabled = true
 
         binding.webView.webViewClient = WebViewClient()
+        binding.webView.webChromeClient = object : WebChromeClient() {
+            override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                super.onProgressChanged(view, newProgress)
+                binding.progressBar.progress = newProgress
+                if (newProgress == 100) {
+                    binding.progressBar.visibility = View.GONE
+                } else {
+                    binding.progressBar.visibility = View.VISIBLE
+                }
+            }
+        }
     }
 
     private fun loadUrl() {
