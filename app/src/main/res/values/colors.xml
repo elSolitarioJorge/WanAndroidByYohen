@@ -2,4 +2,18 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- 状态页通用颜色 -->
+    <color name="state_title_color">#334155</color>     <!-- slate-700 -->
+    <color name="state_desc_color">#64748B</color>      <!-- slate-500 -->
+    <color name="state_btn_text_blue">#2563EB</color>   <!-- blue-600 -->
+    <color name="state_loading_color">#60A5FA</color>    <!-- blue-400 -->
+
+    <!-- 玻璃效果颜色 -->
+    <color name="glass_bg_solid">#B3FFFFFF</color>       <!-- 70% 白色，模拟毛玻璃底色 -->
+    <color name="glass_bg_stroke">#E6FFFFFF</color>      <!-- 90% 白色，高光边框 -->
+    <color name="glow_blue_center">#4D60A5FA</color>     <!-- 30% 蓝色，发光中心 -->
+    <color name="glow_red_center">#4DF87171</color>      <!-- 30% 红色，发光中心 -->
+    <color name="glow_edge">#00FFFFFF</color>            <!-- 透明边缘 -->
+
 </resources>

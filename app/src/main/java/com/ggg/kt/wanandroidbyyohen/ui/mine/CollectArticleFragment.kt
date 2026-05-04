@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentCollectArticleBinding
@@ -52,10 +53,21 @@ class CollectArticleFragment : Fragment() {
         initRecyclerView()
         initRefresh()
         initLoadMore()
+        initClick()
         observeData()
         observeUncollect()
 
         viewModel.refresh()
+    }
+
+    private fun initClick() {
+        binding.stateLayout.onRetryListener = {
+            viewModel.refresh()
+        }
+
+        binding.stateLayout.onEmptyActionListener = {
+            findNavController().navigate(R.id.home_fragment)
+        }
     }
 
     private fun initToolbar() {
@@ -88,14 +100,12 @@ class CollectArticleFragment : Fragment() {
                     when (state) {
                         is UiState.Loading -> {
                             if (!binding.swipeRefresh.isRefreshing) {
-                                binding.tvState.visibility = View.VISIBLE
-                                binding.tvState.text = "加载中..."
+                                binding.stateLayout.showLoading()
                             }
                         }
 
                         is UiState.Success -> {
                             binding.swipeRefresh.isRefreshing = false
-                            binding.tvState.visibility = View.GONE
 
                             val data = state.data
 
@@ -106,15 +116,19 @@ class CollectArticleFragment : Fragment() {
                             }
 
                             if (data.isRefresh && data.articles.isEmpty()) {
-                                binding.tvState.visibility = View.VISIBLE
-                                binding.tvState.text = "暂无收藏"
+                                binding.stateLayout.showEmpty(
+                                    title = "这里空空如也",
+                                    desc = "你还没有收藏过任何内容\n去发现更多精彩文章吧",
+                                    btnText = "去首页逛逛"
+                                )
+                            } else {
+                                binding.stateLayout.showContent()
                             }
                         }
 
                         is UiState.Error -> {
                             binding.swipeRefresh.isRefreshing = false
-                            binding.tvState.visibility = View.VISIBLE
-                            binding.tvState.text = state.message
+                            binding.stateLayout.showError()
                         }
                     }
                 }
