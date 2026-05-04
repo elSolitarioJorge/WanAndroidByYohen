@@ -16,4 +16,19 @@
     <color name="glow_red_center">#4DF87171</color>      <!-- 30% 红色，发光中心 -->
     <color name="glow_edge">#00FFFFFF</color>            <!-- 透明边缘 -->
 
+    <!-- 文章卡片通用色 -->
+    <color name="article_title">#1E293B</color>       <!-- slate-800 -->
+    <color name="article_author">#64748B</color>      <!-- slate-500 -->
+    <color name="article_meta">#94A3B8</color>        <!-- slate-400 (时间、分类) -->
+
+    <!-- 标签：置顶 (红系) -->
+    <color name="tag_top_text">#EF4444</color>        <!-- red-500 -->
+    <color name="tag_top_bg">#FEF2F2</color>          <!-- red-50 -->
+    <color name="tag_top_border">#FECACA</color>      <!-- red-200 -->
+
+    <!-- 标签：类别 (蓝紫系) -->
+    <color name="tag_category_text">#6366F1</color>        <!-- indigo-500 -->
+    <color name="tag_category_bg">#EEF2FF</color>          <!-- indigo-50 -->
+    <color name="tag_category_border">#C7D2FE</color>      <!-- indigo-200 -->
+
 </resources>

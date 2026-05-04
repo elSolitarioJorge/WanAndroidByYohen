@@ -4,7 +4,7 @@ import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
 import com.ggg.kt.wanandroidbyyohen.data.model.ApiResponse
 
-const val LOGIN_EXPIRED_MESSAGE = "还没有登录，请登录后再操作"
+const val LOGIN_EXPIRED_MESSAGE = "您还未登录，请登录后再进行该操作"
 
 suspend fun <T> safeApiCall(
     defaultErrorMessage: String = "请求失败",
