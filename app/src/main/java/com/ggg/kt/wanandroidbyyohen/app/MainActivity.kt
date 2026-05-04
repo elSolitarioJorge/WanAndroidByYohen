@@ -7,7 +7,8 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.ggg.kt.wanandroidbyyohen.R
-import com.ggg.kt.wanandroidbyyohen.common.extension.applyStatusBarPadding
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
+import com.ggg.kt.wanandroidbyyohen.common.extension.setSystemBarsLight
 import com.ggg.kt.wanandroidbyyohen.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -17,7 +18,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.root.applyStatusBarPadding()
+        binding.root.applyTopBarInsets()
+        setSystemBarsLight(true)
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.main_nav_host) as NavHostFragment
 
         val navController = navHostFragment.navController

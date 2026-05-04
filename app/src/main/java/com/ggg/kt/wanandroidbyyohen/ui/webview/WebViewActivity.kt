@@ -5,7 +5,8 @@ import android.os.Bundle
 import android.webkit.WebViewClient
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
-import com.ggg.kt.wanandroidbyyohen.common.extension.applyStatusBarPadding
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
+import com.ggg.kt.wanandroidbyyohen.common.extension.setSystemBarsLight
 import com.ggg.kt.wanandroidbyyohen.databinding.ActivityWebViewBinding
 
 class WebViewActivity : AppCompatActivity() {
@@ -24,6 +25,7 @@ class WebViewActivity : AppCompatActivity() {
 
         binding = ActivityWebViewBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setSystemBarsLight(true)
         initToolbar()
         initWebView()
         loadUrl()
@@ -31,7 +33,7 @@ class WebViewActivity : AppCompatActivity() {
     }
 
     private fun initToolbar() {
-        binding.toolbar.applyStatusBarPadding()
+        binding.toolbar.applyTopBarInsets()
         binding.tvTitle.text = titleText.ifBlank { "文章详情" }
         binding.btnBack.setOnClickListener {
             finish()
