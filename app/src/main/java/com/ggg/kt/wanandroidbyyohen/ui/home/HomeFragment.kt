@@ -2,6 +2,7 @@ package com.ggg.kt.wanandroidbyyohen.ui.home
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -12,12 +13,16 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
+import com.ggg.kt.wanandroidbyyohen.data.model.Banner
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentHomeBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
@@ -25,6 +30,41 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private val binding get() = _binding!!
 
     private val viewModel: HomeViewModel by viewModels()
+    private var isBannerTouching = false
+    private var isBannerScrolling = false
+
+    private val bannerPageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
+        override fun onPageScrollStateChanged(state: Int) {
+            isBannerScrolling = state != ViewPager2.SCROLL_STATE_IDLE
+        }
+    }
+
+    private val bannerTouchListener = object : RecyclerView.SimpleOnItemTouchListener() {
+        override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+            isBannerTouching = when (e.actionMasked) {
+                MotionEvent.ACTION_DOWN,
+                MotionEvent.ACTION_MOVE -> true
+
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL -> false
+
+                else -> isBannerTouching
+            }
+            return false
+        }
+    }
+
+    private val bannerAdapter by lazy {
+        BannerAdapter(
+            onBannerClick = { banner ->
+                ArticleNavigator.openWebView(
+                    context = requireContext(),
+                    title = banner.title,
+                    url = banner.url
+                )
+            }
+        )
+    }
 
     private val articleAdapter by lazy {
         ArticleAdapter(
@@ -49,12 +89,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        initBanner()
         initRecyclerView()
         observeData()
         initRefresh()
         initLoadMore()
         initClick()
         observeCollectState()
+        startBannerAutoScroll()
         viewModel.refreshHomeData()
     }
 
@@ -69,6 +111,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         binding.rvArticles.adapter = articleAdapter
     }
 
+    private fun initBanner() {
+        binding.cvBannerContainer.visibility = View.GONE
+        binding.vpBanner.adapter = bannerAdapter
+        binding.vpBanner.registerOnPageChangeCallback(bannerPageChangeCallback)
+        getBannerRecyclerView()?.addOnItemTouchListener(bannerTouchListener)
+    }
+
     private fun observeData() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -76,35 +125,68 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     when(state) {
                         is UiState.Loading -> {
                             if (!binding.swipeRefresh.isRefreshing) {
-                                binding.tvState.visibility = View.VISIBLE
-                                binding.tvState.text = "加载中..."
+                                binding.stateLayout.showLoading()
                             }
                         }
 
                         is UiState.Success -> {
-                            binding.tvState.visibility = View.GONE
                             binding.swipeRefresh.isRefreshing = false
                             val homeData = state.data
-                            if (homeData.banners.isNotEmpty()) {
-                                binding.banner.text = homeData.banners.first().title
-                            }
                             if (homeData.isRefresh) {
+                                updateBanners(homeData.banners)
                                 articleAdapter.submitList(homeData.articles)
                             } else {
                                 articleAdapter.addList(homeData.articles)
                             }
-
+                            binding.stateLayout.showContent()
                         }
 
                         is UiState.Error -> {
                             binding.swipeRefresh.isRefreshing = false
-                            binding.tvState.visibility = View.VISIBLE
-                            binding.tvState.text = state.message
+                            binding.stateLayout.showError()
                         }
                     }
                 }
             }
         }
+    }
+
+    private fun updateBanners(banners: List<Banner>) {
+        bannerAdapter.submitList(banners)
+
+        if (banners.isEmpty()) {
+            binding.cvBannerContainer.visibility = View.GONE
+            return
+        }
+
+        binding.cvBannerContainer.visibility = View.VISIBLE
+        binding.vpBanner.setCurrentItem(bannerAdapter.getInitialPosition(), false)
+    }
+
+    private fun startBannerAutoScroll() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (true) {
+                    delay(BANNER_AUTO_SCROLL_INTERVAL)
+                    if (canAutoScrollBanner()) {
+                        binding.vpBanner.setCurrentItem(
+                            binding.vpBanner.currentItem + 1,
+                            true
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun canAutoScrollBanner(): Boolean {
+        return bannerAdapter.realItemCount > 1 &&
+            !isBannerTouching &&
+            !isBannerScrolling
+    }
+
+    private fun getBannerRecyclerView(): RecyclerView? {
+        return binding.vpBanner.getChildAt(0) as? RecyclerView
     }
 
     private fun initRefresh() {
@@ -149,7 +231,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        getBannerRecyclerView()?.removeOnItemTouchListener(bannerTouchListener)
+        binding.vpBanner.unregisterOnPageChangeCallback(bannerPageChangeCallback)
+        binding.vpBanner.adapter = null
         _binding = null
     }
 
+    companion object {
+        private const val BANNER_AUTO_SCROLL_INTERVAL = 3_000L
+    }
 }
