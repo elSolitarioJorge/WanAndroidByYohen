@@ -17,14 +17,17 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
 import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentSearchBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
+import com.google.android.flexbox.AlignItems
 import com.google.android.flexbox.FlexDirection
 import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.FlexboxLayoutManager
+import com.google.android.flexbox.JustifyContent
 import kotlinx.coroutines.launch
 
 class SearchFragment : Fragment() {
@@ -65,6 +68,7 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        initInsets()
         initRecyclerView()
         initClick()
         initRefresh()
@@ -73,11 +77,16 @@ class SearchFragment : Fragment() {
 
         viewModel.loadHotKeys()
     }
+    private fun initInsets() {
+        binding.layoutSearchBar.applyTopBarInsets()
+    }
 
     private fun initRecyclerView() {
         binding.rvHotKeys.layoutManager = FlexboxLayoutManager(requireContext()).apply {
             flexDirection = FlexDirection.ROW
             flexWrap = FlexWrap.WRAP
+            justifyContent = JustifyContent.FLEX_START
+            alignItems = AlignItems.FLEX_START
         }
         binding.rvHotKeys.adapter = hotKeyAdapter
 
@@ -86,12 +95,15 @@ class SearchFragment : Fragment() {
     }
 
     private fun initClick() {
+        binding.stateLayout.onRetryListener = {
+            searchOrShowHotKeys()
+        }
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
 
         binding.tvSearch.setOnClickListener {
-            viewModel.search(binding.etKeyword.text.toString())
+            searchOrShowHotKeys()
         }
 
         binding.etKeyword.setOnEditorActionListener { _, actionId, event ->
@@ -100,7 +112,7 @@ class SearchFragment : Fragment() {
                     event.action == KeyEvent.ACTION_UP
 
             if (isSearchAction || isEnterUp) {
-                viewModel.search(binding.etKeyword.text.toString())
+                searchOrShowHotKeys()
                 true
             } else {
                 false
@@ -132,18 +144,16 @@ class SearchFragment : Fragment() {
                 viewModel.hotKeyState.collect { state ->
                     when (state) {
                         is UiState.Loading -> {
-                            binding.tvState.visibility = View.VISIBLE
-                            binding.tvState.text = "加载中..."
+                            binding.layoutHotKey.visibility = View.GONE
                         }
 
                         is UiState.Success -> {
-                            binding.tvState.visibility = View.GONE
                             hotKeyAdapter.submitList(state.data)
+                            binding.layoutHotKey.visibility = View.VISIBLE
                         }
 
                         is UiState.Error -> {
-                            binding.tvState.visibility = View.VISIBLE
-                            binding.tvState.text = state.message
+                            binding.layoutHotKey.visibility = View.GONE
                         }
                     }
                 }
@@ -163,14 +173,12 @@ class SearchFragment : Fragment() {
                             binding.swipeRefresh.visibility = View.VISIBLE
 
                             if (!binding.swipeRefresh.isRefreshing) {
-                                binding.tvState.visibility = View.VISIBLE
-                                binding.tvState.text = "搜索中..."
+                                binding.stateLayout.showLoading()
                             }
                         }
 
                         is UiState.Success -> {
                             binding.swipeRefresh.isRefreshing = false
-                            binding.tvState.visibility = View.GONE
                             binding.layoutHotKey.visibility = View.GONE
                             binding.swipeRefresh.visibility = View.VISIBLE
 
@@ -183,15 +191,15 @@ class SearchFragment : Fragment() {
                             }
 
                             if (data.isRefresh && data.articles.isEmpty()) {
-                                binding.tvState.visibility = View.VISIBLE
-                                binding.tvState.text = "暂无搜索结果"
+                                binding.stateLayout.showEmpty()
+                            } else {
+                                binding.stateLayout.showContent()
                             }
                         }
 
                         is UiState.Error -> {
                             binding.swipeRefresh.isRefreshing = false
-                            binding.tvState.visibility = View.VISIBLE
-                            binding.tvState.text = state.message
+                            binding.stateLayout.showError()
                         }
                     }
                 }
@@ -224,6 +232,25 @@ class SearchFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun searchOrShowHotKeys() {
+        val keyword = binding.etKeyword.text.toString()
+        if (keyword.isBlank()) {
+            showHotKeys()
+            if (viewModel.hotKeyState.value !is UiState.Success) {
+                viewModel.loadHotKeys()
+            }
+        } else {
+            viewModel.search(keyword)
+        }
+    }
+
+    private fun showHotKeys() {
+        binding.swipeRefresh.isRefreshing = false
+        binding.swipeRefresh.visibility = View.GONE
+        binding.stateLayout.showContent()
+        binding.layoutHotKey.visibility = View.VISIBLE
     }
 
     private fun handleCollectClick(article: Article) {
