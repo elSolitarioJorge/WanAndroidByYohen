@@ -1,4 +1,4 @@
-package com.ggg.kt.wanandroidbyyohen.ui.square
+package com.ggg.kt.wanandroidbyyohen.ui.share
 
 import android.os.Bundle
 import android.view.LayoutInflater

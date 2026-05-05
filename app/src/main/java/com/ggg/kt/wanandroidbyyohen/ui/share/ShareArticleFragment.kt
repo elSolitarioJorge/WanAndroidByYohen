@@ -1,4 +1,4 @@
-package com.ggg.kt.wanandroidbyyohen.ui.square
+package com.ggg.kt.wanandroidbyyohen.ui.share
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -59,12 +59,14 @@ class ShareArticleFragment : Fragment() {
                         null -> Unit
 
                         is UiState.Loading -> {
-                            binding.tvState.text = "提交中..."
                             binding.btnShare.isEnabled = false
+                            binding.btnShare.text = "正在提交..."
+                            binding.tvState.text = ""
                         }
 
                         is UiState.Success -> {
                             binding.btnShare.isEnabled = true
+                            binding.btnShare.text = "提交分享"
                             Toast.makeText(
                                 requireContext(),
                                 "分享成功",
@@ -75,6 +77,7 @@ class ShareArticleFragment : Fragment() {
 
                         is UiState.Error -> {
                             binding.btnShare.isEnabled = true
+                            binding.btnShare.text = "提交分享"
                             binding.tvState.text = state.message
                         }
                     }

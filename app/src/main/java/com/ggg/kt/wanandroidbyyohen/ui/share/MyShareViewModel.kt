@@ -1,4 +1,4 @@
-package com.ggg.kt.wanandroidbyyohen.ui.square
+package com.ggg.kt.wanandroidbyyohen.ui.share
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

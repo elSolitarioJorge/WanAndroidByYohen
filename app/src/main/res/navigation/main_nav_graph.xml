@@ -52,11 +52,11 @@
 
     <fragment
         android:id="@+id/share_article_fragment"
-        android:name="com.ggg.kt.wanandroidbyyohen.ui.square.ShareArticleFragment"
+        android:name="com.ggg.kt.wanandroidbyyohen.ui.share.ShareArticleFragment"
         android:label="分享文章"/>
 
     <fragment
         android:id="@+id/my_share_fragment"
-        android:name="com.ggg.kt.wanandroidbyyohen.ui.square.MyShareFragment"
+        android:name="com.ggg.kt.wanandroidbyyohen.ui.share.MyShareFragment"
         android:label="我的分享"/>
 </navigation>
