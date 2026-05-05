@@ -1,4 +1,4 @@
-package com.ggg.kt.wanandroidbyyohen.ui.project
+package com.ggg.kt.wanandroidbyyohen.data.model
 
 data class ProjectTab(
     val title: String,

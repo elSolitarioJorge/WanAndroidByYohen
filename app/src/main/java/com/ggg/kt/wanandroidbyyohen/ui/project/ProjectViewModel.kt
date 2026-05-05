@@ -3,6 +3,7 @@ package com.ggg.kt.wanandroidbyyohen.ui.project
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
+import com.ggg.kt.wanandroidbyyohen.data.model.ProjectTab
 import com.ggg.kt.wanandroidbyyohen.data.repository.ProjectRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +15,20 @@ class ProjectViewModel : ViewModel() {
     private val _tabState = MutableStateFlow<UiState<List<ProjectTab>>>(UiState.Loading)
     val tabState: StateFlow<UiState<List<ProjectTab>>> = _tabState
 
-    fun loadProjectTabs() {
+    private var cachedTabs: List<ProjectTab>? = null
+    private var isLoadingTabs = false
+    private var selectedPosition = 0
+
+    fun loadProjectTabsIfNeeded() {
+        if (cachedTabs != null || isLoadingTabs) return
+
+        refreshProjectTabs()
+    }
+
+    fun refreshProjectTabs() {
+        if (isLoadingTabs) return
+
+        isLoadingTabs = true
         viewModelScope.launch {
             _tabState.value = UiState.Loading
 
@@ -39,6 +53,12 @@ class ProjectViewModel : ViewModel() {
                         }
                     )
 
+                    cachedTabs = tabs
+                    selectedPosition = if (tabs.isEmpty()) {
+                        0
+                    } else {
+                        selectedPosition.coerceIn(tabs.indices)
+                    }
                     _tabState.value = UiState.Success(tabs)
                 }
 
@@ -50,6 +70,15 @@ class ProjectViewModel : ViewModel() {
                     _tabState.value = UiState.Loading
                 }
             }
+            isLoadingTabs = false
         }
+    }
+
+    fun saveSelectedPosition(position: Int) {
+        selectedPosition = position
+    }
+
+    fun getSelectedPosition(): Int {
+        return selectedPosition
     }
 }

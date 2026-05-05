@@ -9,8 +9,11 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.viewpager2.widget.ViewPager2
 import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
+import com.ggg.kt.wanandroidbyyohen.data.model.ProjectTab
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentProjectBinding
 import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.launch
@@ -23,6 +26,13 @@ class ProjectFragment : Fragment(R.layout.fragment_project) {
     private val viewModel: ProjectViewModel by viewModels()
 
     private var tabLayoutMediator: TabLayoutMediator? = null
+    private var currentTabs: List<ProjectTab> = emptyList()
+
+    private val pageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
+        override fun onPageSelected(position: Int) {
+            viewModel.saveSelectedPosition(position)
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,8 +46,21 @@ class ProjectFragment : Fragment(R.layout.fragment_project) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        initInsets()
+        initRefresh()
         observeData()
-        viewModel.loadProjectTabs()
+        binding.viewPager.registerOnPageChangeCallback(pageChangeCallback)
+        viewModel.loadProjectTabsIfNeeded()
+    }
+
+    private fun initInsets() {
+        binding.topBar.applyTopBarInsets()
+    }
+
+    private fun initRefresh() {
+        binding.stateLayout.onRetryListener = {
+            viewModel.refreshProjectTabs()
+        }
     }
 
     private fun observeData() {
@@ -46,21 +69,16 @@ class ProjectFragment : Fragment(R.layout.fragment_project) {
                 viewModel.tabState.collect { state ->
                     when (state) {
                         is UiState.Loading -> {
-                            binding.contentGroup.visibility = View.GONE
-                            binding.tvState.visibility = View.VISIBLE
-                            binding.tvState.text = "加载中..."
+                            binding.stateLayout.showLoading()
                         }
 
                         is UiState.Success -> {
-                            binding.tvState.visibility = View.GONE
-                            binding.contentGroup.visibility = View.VISIBLE
                             setupViewPager(state.data)
+                            binding.stateLayout.showContent()
                         }
 
                         is UiState.Error -> {
-                            binding.contentGroup.visibility = View.GONE
-                            binding.tvState.visibility = View.VISIBLE
-                            binding.tvState.text = state.message
+                            binding.stateLayout.showError()
                         }
                     }
                 }
@@ -69,9 +87,15 @@ class ProjectFragment : Fragment(R.layout.fragment_project) {
     }
 
     private fun setupViewPager(tabs: List<ProjectTab>) {
-        binding.viewPager.adapter = ProjectPagerAdapter(this, tabs)
+        if (binding.viewPager.adapter != null && currentTabs == tabs) {
+            restoreSelectedTab(tabs)
+            return
+        }
 
         tabLayoutMediator?.detach()
+        binding.viewPager.adapter = ProjectPagerAdapter(this, tabs)
+        currentTabs = tabs
+
         tabLayoutMediator = TabLayoutMediator(
             binding.tabLayout,
             binding.viewPager
@@ -80,11 +104,23 @@ class ProjectFragment : Fragment(R.layout.fragment_project) {
         }
 
         tabLayoutMediator?.attach()
+        restoreSelectedTab(tabs)
+    }
+
+    private fun restoreSelectedTab(tabs: List<ProjectTab>) {
+        if (tabs.isEmpty()) return
+
+        binding.viewPager.setCurrentItem(
+            viewModel.getSelectedPosition().coerceIn(tabs.indices),
+            false
+        )
     }
 
     override fun onDestroyView() {
         tabLayoutMediator?.detach()
         tabLayoutMediator = null
+        binding.viewPager.unregisterOnPageChangeCallback(pageChangeCallback)
+        binding.viewPager.adapter = null
         super.onDestroyView()
         _binding = null
     }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.data.model.ProjectListData
+import com.ggg.kt.wanandroidbyyohen.data.model.ProjectTab
 import com.ggg.kt.wanandroidbyyohen.data.repository.CollectRepository
 import com.ggg.kt.wanandroidbyyohen.data.repository.ProjectRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,20 +25,38 @@ class ProjectListViewModel : ViewModel() {
     val projectListState: StateFlow<UiState<ProjectListData>> = _projectListState
 
     private var tab: ProjectTab? = null
+    private var currentData: ProjectListData? = null
 
     private var currentPage = 0
     private var hasMore = true
     private var isLoadingMore = false
+    private var isRefreshing = false
+    private var hasLoaded = false
 
     fun setTab(projectTab: ProjectTab) {
-        if (tab == null) {
-            tab = projectTab
-        }
+        if (tab == projectTab) return
+
+        tab = projectTab
+        currentData = null
+        currentPage = 0
+        hasMore = true
+        isLoadingMore = false
+        isRefreshing = false
+        hasLoaded = false
+        _projectListState.value = UiState.Loading
+    }
+
+    fun loadIfNeeded() {
+        if (hasLoaded || isRefreshing) return
+
+        refresh()
     }
 
     fun refresh() {
         val currentTab = tab ?: return
+        if (isRefreshing) return
 
+        isRefreshing = true
         viewModelScope.launch {
             currentPage = if (currentTab.isLatest) 0 else 1
             hasMore = true
@@ -54,30 +73,43 @@ class ProjectListViewModel : ViewModel() {
             _projectListState.value = result
 
             if (result is UiState.Success) {
+                currentData = result.data
+                hasLoaded = true
                 hasMore = result.data.hasMore
                 currentPage++
+            } else if (result is UiState.Error) {
+                hasLoaded = false
             }
+
+            isRefreshing = false
         }
     }
 
     fun loadMore() {
         val currentTab = tab ?: return
-        if (isLoadingMore || !hasMore) return
+        val oldData = currentData ?: return
+        if (isLoadingMore || isRefreshing || !hasMore) return
 
+        isLoadingMore = true
         viewModelScope.launch {
-            isLoadingMore = true
-
             val result = requestProjects(
                 tab = currentTab,
                 page = currentPage,
                 isRefresh = false
             )
 
-            _projectListState.value = result
-
             if (result is UiState.Success) {
+                val mergedData = oldData.copy(
+                    articles = oldData.articles + result.data.articles,
+                    isRefresh = false,
+                    hasMore = result.data.hasMore
+                )
+                currentData = mergedData
                 hasMore = result.data.hasMore
                 currentPage++
+                _projectListState.value = UiState.Success(mergedData)
+            } else {
+                _projectListState.value = result
             }
 
             isLoadingMore = false
@@ -119,10 +151,29 @@ class ProjectListViewModel : ViewModel() {
             }
 
             _collectState.value = when (result) {
-                is UiState.Success -> UiState.Success(article.id to !article.collect)
+                is UiState.Success -> {
+                    updateCurrentCollectState(article.id, !article.collect)
+                    UiState.Success(article.id to !article.collect)
+                }
+
                 is UiState.Error -> UiState.Error(result.message)
                 is UiState.Loading -> UiState.Loading
             }
         }
+    }
+
+    private fun updateCurrentCollectState(articleId: Int, collect: Boolean) {
+        val data = currentData ?: return
+        val newData = data.copy(
+            articles = data.articles.map { article ->
+                if (article.id == articleId) {
+                    article.copy(collect = collect)
+                } else {
+                    article
+                }
+            }
+        )
+        currentData = newData
+        _projectListState.value = UiState.Success(newData)
     }
 }

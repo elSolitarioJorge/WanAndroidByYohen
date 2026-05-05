@@ -13,7 +13,7 @@
         android:layout_marginBottom="32dp"
         android:background="@drawable/shape_circle_glass"
         android:elevation="16dp"
-        app:layout_constraintVertical_bias="0.15"
+        app:layout_constraintVertical_bias="0.1"
         app:layout_constraintBottom_toTopOf="@id/tv_error_title"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

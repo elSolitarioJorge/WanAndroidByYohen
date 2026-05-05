@@ -82,6 +82,10 @@ class SquareArticleListFragment : Fragment() {
         binding.swipeRefresh.setOnRefreshListener {
             viewModel.refresh()
         }
+
+        binding.stateLayout.onRetryListener = {
+            viewModel.refresh()
+        }
     }
 
     private fun initLoadMore() {

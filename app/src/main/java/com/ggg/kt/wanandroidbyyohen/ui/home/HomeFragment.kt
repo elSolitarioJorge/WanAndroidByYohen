@@ -107,6 +107,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private fun initClick() {
+        binding.stateLayout.onRetryListener = {
+            viewModel.refreshHomeData()
+        }
         binding.tvSearchEntry.setOnClickListener {
             findNavController().navigate(R.id.search_fragment)
         }

@@ -18,6 +18,7 @@ import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
 import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
+import com.ggg.kt.wanandroidbyyohen.data.model.ProjectTab
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentProjectListBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
 import kotlinx.coroutines.launch
@@ -68,8 +69,11 @@ class ProjectListFragment : Fragment() {
         initLoadMore()
         observeData()
         observeCollectState()
+    }
 
-        viewModel.refresh()
+    override fun onResume() {
+        super.onResume()
+        viewModel.loadIfNeeded()
     }
 
     private fun initRecyclerView() {
@@ -79,6 +83,9 @@ class ProjectListFragment : Fragment() {
 
     private fun initRefresh() {
         binding.swipeRefresh.setOnRefreshListener {
+            viewModel.refresh()
+        }
+        binding.stateLayout.onRetryListener = {
             viewModel.refresh()
         }
     }
@@ -96,27 +103,19 @@ class ProjectListFragment : Fragment() {
                     when (state) {
                         is UiState.Loading -> {
                             if (!binding.swipeRefresh.isRefreshing) {
-                                binding.tvState.visibility = View.VISIBLE
-                                binding.tvState.text = "加载中..."
+                                binding.stateLayout.showLoading()
                             }
                         }
 
                         is UiState.Success -> {
                             binding.swipeRefresh.isRefreshing = false
-                            binding.tvState.visibility = View.GONE
-
-                            val data = state.data
-                            if (data.isRefresh) {
-                                projectAdapter.submitList(data.articles)
-                            } else {
-                                projectAdapter.addList(data.articles)
-                            }
+                            projectAdapter.submitList(state.data.articles)
+                            binding.stateLayout.showContent()
                         }
 
                         is UiState.Error -> {
                             binding.swipeRefresh.isRefreshing = false
-                            binding.tvState.visibility = View.VISIBLE
-                            binding.tvState.text = state.message
+                            binding.stateLayout.showError()
                         }
                     }
                 }

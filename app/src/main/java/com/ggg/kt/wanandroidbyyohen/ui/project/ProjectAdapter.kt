@@ -2,41 +2,36 @@ package com.ggg.kt.wanandroidbyyohen.ui.project
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
+import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.ItemProjectBinding
 
 class ProjectAdapter(
     private val onItemClick: (Article) -> Unit,
     private val onCollectClick: ((Article) -> Unit)? = null
-) : RecyclerView.Adapter<ProjectAdapter.ProjectViewHolder>() {
-
-    private val projects = mutableListOf<Article>()
-
-    fun submitList(newList: List<Article>) {
-        projects.clear()
-        projects.addAll(newList)
-        notifyDataSetChanged()
-    }
+) : ListAdapter<Article, ProjectAdapter.ProjectViewHolder>(ProjectDiffCallback()) {
 
     fun addList(newList: List<Article>) {
         if (newList.isEmpty()) return
-
-        val startPosition = projects.size
-        projects.addAll(newList)
-        notifyItemRangeInserted(startPosition, newList.size)
+        submitList(currentList + newList)
     }
 
     fun updateCollectState(articleId: Int, collect: Boolean) {
-        val index = projects.indexOfFirst { it.id == articleId }
-        if (index == -1) return
-
-        projects[index] = projects[index].copy(collect = collect)
-        notifyItemChanged(index)
+        val newList = currentList.map { article ->
+            if (article.id == articleId) {
+                article.copy(collect = collect)
+            } else {
+                article
+            }
+        }
+        submitList(newList)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProjectViewHolder {
@@ -54,10 +49,16 @@ class ProjectAdapter(
     }
 
     override fun onBindViewHolder(holder: ProjectViewHolder, position: Int) {
-        holder.bind(projects[position])
+        holder.bind(getItem(position))
     }
 
-    override fun getItemCount(): Int = projects.size
+    override fun onBindViewHolder(holder: ProjectViewHolder, position: Int, payloads: List<Any?>) {
+        if (payloads.contains(PAYLOAD_COLLECT)) {
+            holder.bindCollect(getItem(position))
+        } else {
+            holder.bind(getItem(position))
+        }
+    }
 
     class ProjectViewHolder(
         private val binding: ItemProjectBinding,
@@ -77,21 +78,43 @@ class ProjectAdapter(
                 error(android.R.drawable.ic_menu_report_image)
             }
 
-            binding.tvCollect.text = if (article.collect) "♥" else "♡"
-            binding.tvCollect.setTextColor(
-                if (article.collect) {
-                    0xFFE91E63.toInt()
-                } else {
-                    0xFF999999.toInt()
-                }
-            )
+            bindCollect(article)
 
             binding.root.setOnClickListener {
                 onItemClick(article)
             }
 
-            binding.tvCollect.setOnClickListener {
+            binding.ivCollect.setOnClickListener {
                 onCollectClick?.invoke(article)
+            }
+        }
+
+        fun bindCollect(article: Article) {
+            binding.ivCollect.setImageResource(
+                if (article.collect) R.drawable.ic_heart_filled
+                else R.drawable.ic_heart_line
+            )
+        }
+    }
+
+    companion object {
+        private const val PAYLOAD_COLLECT = "payload_collect"
+    }
+
+    private class ProjectDiffCallback : DiffUtil.ItemCallback<Article>() {
+        override fun areItemsTheSame(oldItem: Article, newItem: Article): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: Article, newItem: Article): Boolean {
+            return oldItem == newItem
+        }
+
+        override fun getChangePayload(oldItem: Article, newItem: Article): Any? {
+            return if (oldItem.collect != newItem.collect) {
+                PAYLOAD_COLLECT
+            } else {
+                null
             }
         }
     }
