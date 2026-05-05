@@ -80,10 +80,6 @@ class ArticleAdapter(
             binding.root.setOnClickListener {
                 onItemClick(article)
             }
-
-            binding.btnCollect.setOnClickListener {
-                onCollectClick.invoke(article)
-            }
         }
 
         fun bindCollect(article: Article) {
@@ -91,6 +87,9 @@ class ArticleAdapter(
                 if (article.collect) R.drawable.ic_heart_filled
                 else R.drawable.ic_heart_line
             )
+            binding.btnCollect.setOnClickListener {
+                onCollectClick.invoke(article)
+            }
         }
     }
 

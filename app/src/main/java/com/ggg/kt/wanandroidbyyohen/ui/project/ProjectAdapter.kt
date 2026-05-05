@@ -83,10 +83,6 @@ class ProjectAdapter(
             binding.root.setOnClickListener {
                 onItemClick(article)
             }
-
-            binding.ivCollect.setOnClickListener {
-                onCollectClick?.invoke(article)
-            }
         }
 
         fun bindCollect(article: Article) {
@@ -94,6 +90,9 @@ class ProjectAdapter(
                 if (article.collect) R.drawable.ic_heart_filled
                 else R.drawable.ic_heart_line
             )
+            binding.ivCollect.setOnClickListener {
+                onCollectClick?.invoke(article)
+            }
         }
     }
 
