@@ -1,82 +1,34 @@
 package com.ggg.kt.wanandroidbyyohen.ui.square
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.ggg.kt.wanandroidbyyohen.common.base.UiState
-import com.ggg.kt.wanandroidbyyohen.data.model.Article
-import com.ggg.kt.wanandroidbyyohen.data.model.SquareData
-import com.ggg.kt.wanandroidbyyohen.data.repository.CollectRepository
-import com.ggg.kt.wanandroidbyyohen.data.repository.SquareRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
+import com.ggg.kt.wanandroidbyyohen.data.model.SquareTag
 
 class SquareViewModel : ViewModel() {
-    private val repository = SquareRepository()
-    private val collectRepository = CollectRepository()
+    val tags = listOf(
+        SquareTag(title = "最新分享"),
+        SquareTag(title = "面试", keyword = "面试"),
+        SquareTag(title = "Kotlin", keyword = "Kotlin"),
+        SquareTag(title = "Java", keyword = "Java"),
+        SquareTag(title = "性能优化", keyword = "性能优化"),
+        SquareTag(title = "源码", keyword = "源码"),
+        SquareTag(title = "架构", keyword = "架构"),
+        SquareTag(title = "Jetpack", keyword = "Jetpack"),
+        SquareTag(title = "开源", keyword = "开源")
+    )
 
-    private val _collectState = MutableStateFlow<UiState<Pair<Int, Boolean>>?>(null)
-    val collectState: StateFlow<UiState<Pair<Int, Boolean>>?> = _collectState
-    private val _squareState = MutableStateFlow<UiState<SquareData>>(UiState.Loading)
-    val squareState: StateFlow<UiState<SquareData>> = _squareState
+    private var selectedPosition = 0
 
-    private var currentPage = 0
-    private var hasMore = true
-    private var isLoadingMore = false
+    fun selectPosition(position: Int) {
+        if (position !in tags.indices) return
 
-    fun refreshSquareArticles() {
-        viewModelScope.launch {
-            currentPage = 0
-            hasMore = true
-            isLoadingMore = false
-
-            _squareState.value = UiState.Loading
-            val result = repository.getSquareArticles(
-                page = 0,
-                isRefresh = true
-            )
-            _squareState.value = result
-            if (result is UiState.Success) {
-                hasMore = result.data.hasMore
-                currentPage = 1
-            }
-        }
+        selectedPosition = position
     }
 
-    fun loadMoreSquareArticles() {
-        if (isLoadingMore || !hasMore) return
-
-        viewModelScope.launch {
-            isLoadingMore = true
-            val result = repository.getSquareArticles(
-                page = currentPage,
-                isRefresh = false
-            )
-            _squareState.value = result
-
-            if (result is UiState.Success) {
-                hasMore = result.data.hasMore
-                currentPage++
-            }
-            isLoadingMore = false
-        }
+    fun getSelectedPosition(): Int {
+        return selectedPosition
     }
 
-    fun toggleCollect(article: Article) {
-        viewModelScope.launch {
-            _collectState.value = UiState.Loading
-
-            val result = if (article.collect) {
-                collectRepository.uncollectArticle(article.id)
-            } else {
-                collectRepository.collectArticle(article.id)
-            }
-
-            _collectState.value = when (result) {
-                is UiState.Success -> UiState.Success(article.id to !article.collect)
-                is UiState.Error -> UiState.Error(result.message)
-                is UiState.Loading -> UiState.Loading
-            }
-        }
+    fun getSelectedTag(): SquareTag {
+        return tags[selectedPosition]
     }
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 选中状态：靛蓝色卡片 -->
+    <item android:state_selected="true">
+        <shape>
+            <corners android:radius="16dp" />
+            <solid android:color="#6366F1" />
+        </shape>
+    </item>
+    <!-- 默认未选中状态：白底细描边玻璃卡片 -->
+    <item>
+        <shape>
+            <corners android:radius="16dp" />
+            <solid android:color="#FFFFFF" />
+            <stroke android:width="1dp" android:color="#E2E8F0" />
+        </shape>
+    </item>
+</selector>
