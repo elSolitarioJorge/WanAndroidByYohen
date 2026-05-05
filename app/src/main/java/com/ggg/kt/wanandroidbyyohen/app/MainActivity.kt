@@ -2,7 +2,13 @@ package com.ggg.kt.wanandroidbyyohen.app
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
@@ -15,14 +21,33 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSystemBarsLight(true)
+        setupBottomNavInsets()
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.main_nav_host) as NavHostFragment
-
         val navController = navHostFragment.navController
         binding.bottomNav.setupWithNavController(navController)
         setupBottomNavVisibility(navController)
+    }
+
+    private fun setupBottomNavInsets() {
+        val initialBottomMargin =
+            (binding.bottomNav.layoutParams as ConstraintLayout.LayoutParams).bottomMargin
+        val initialPaddingBottom = binding.bottomNav.paddingBottom
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNav) { view, insets ->
+            val bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+
+            view.updateLayoutParams<ConstraintLayout.LayoutParams> {
+                bottomMargin = initialBottomMargin + bottomInset
+            }
+            view.updatePadding(bottom = initialPaddingBottom)
+
+            insets
+        }
+        ViewCompat.requestApplyInsets(binding.bottomNav)
     }
 
     private fun setupBottomNavVisibility(navController: NavController) {

@@ -1,26 +1,4 @@
-<!--
-  ~ Copyright (C) 2026 The Android Open Source Project
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~      http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:height="48dp" android:viewportHeight="48" android:viewportWidth="48" android:width="48dp">
-      
-    <path android:fillColor="#00000000" android:pathData="M18,6H8C6.895,6 6,6.895 6,8V18C6,19.105 6.895,20 8,20H18C19.105,20 20,19.105 20,18V8C20,6.895 19.105,6 18,6Z" android:strokeColor="#000000" android:strokeLineJoin="round" android:strokeWidth="3"/>
-      
-    <path android:fillColor="#00000000" android:pathData="M18,28H8C6.895,28 6,28.895 6,30V40C6,41.105 6.895,42 8,42H18C19.105,42 20,41.105 20,40V30C20,28.895 19.105,28 18,28Z" android:strokeColor="#000000" android:strokeLineJoin="round" android:strokeWidth="3"/>
-      
-    <path android:fillColor="#00000000" android:pathData="M40,6H30C28.895,6 28,6.895 28,8V18C28,19.105 28.895,20 30,20H40C41.105,20 42,19.105 42,18V8C42,6.895 41.105,6 40,6Z" android:strokeColor="#000000" android:strokeLineJoin="round" android:strokeWidth="3"/>
-      
-    <path android:fillColor="#00000000" android:pathData="M40,28H30C28.895,28 28,28.895 28,30V40C28,41.105 28.895,42 30,42H40C41.105,42 42,41.105 42,40V30C42,28.895 41.105,28 40,28Z" android:strokeColor="#000000" android:strokeLineJoin="round" android:strokeWidth="3"/>
-    
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:strokeWidth="2" android:strokeColor="#000000" android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000" android:pathData="M3,3h7v7H3z M14,3h7v7h-7z M14,14h7v7h-7z M3,14h7v7H3z" />
 </vector>
