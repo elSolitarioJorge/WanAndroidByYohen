@@ -24,6 +24,7 @@
             android:focusable="true"
             android:padding="12dp"
             android:src="@drawable/ic_back"
+            android:layout_marginTop="8dp"
             app:tint="#475569" />
 
         <TextView

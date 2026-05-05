@@ -18,6 +18,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
 import com.ggg.kt.wanandroidbyyohen.data.model.Banner
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentHomeBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
@@ -89,7 +90,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        initInsets()
         initBanner()
         initRecyclerView()
         observeData()
@@ -99,6 +100,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         observeCollectState()
         startBannerAutoScroll()
         viewModel.loadHomeDataIfNeeded()
+    }
+
+    private fun initInsets() {
+        binding.searchContainer.applyTopBarInsets()
     }
 
     private fun initClick() {

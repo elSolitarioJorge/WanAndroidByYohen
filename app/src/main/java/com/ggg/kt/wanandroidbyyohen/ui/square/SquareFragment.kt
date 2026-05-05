@@ -10,6 +10,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.ggg.kt.wanandroidbyyohen.R
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
 import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentSquareBinding
 
@@ -56,9 +57,14 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        initInsets()
         initTags()
         initViewPager()
         initClick()
+    }
+
+    private fun initInsets() {
+        binding.llTopFixedArea.applyTopBarInsets()
     }
 
     private fun initTags() {
