@@ -23,8 +23,17 @@ class HomeViewModel : ViewModel() {
     private var currentPage = 0
     private var hasMore = true
     private var isLoadingMore = false
+    private var hasLoadedHomeData = false
+    private var currentHomeData: HomeData? = null
+
+    fun loadHomeDataIfNeeded() {
+        if (hasLoadedHomeData) return
+
+        refreshHomeData()
+    }
 
     fun refreshHomeData() {
+        hasLoadedHomeData = true
         viewModelScope.launch {
             currentPage = 0
             hasMore = true
@@ -32,11 +41,12 @@ class HomeViewModel : ViewModel() {
 
             _homeState.value = UiState.Loading
             val result = repository.refreshHomeData()
-            _homeState.value = result
             if (result is UiState.Success) {
+                currentHomeData = result.data
                 hasMore = result.data.hasMore
                 currentPage = 1
             }
+            _homeState.value = result
         }
     }
 
@@ -46,11 +56,21 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             isLoadingMore = true
             val result = repository.loadMoreArticles(currentPage)
-            _homeState.value = result
 
             if (result is UiState.Success) {
+                val oldHomeData = currentHomeData
+                val newHomeData = result.data
+                val mergedHomeData = oldHomeData?.copy(
+                    articles = oldHomeData.articles + newHomeData.articles,
+                    isRefresh = false,
+                    hasMore = newHomeData.hasMore
+                ) ?: newHomeData
+                currentHomeData = mergedHomeData
                 hasMore = result.data.hasMore
                 currentPage++
+                _homeState.value = UiState.Success(mergedHomeData)
+            } else {
+                _homeState.value = result
             }
             isLoadingMore = false
         }

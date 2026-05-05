@@ -32,6 +32,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private val viewModel: HomeViewModel by viewModels()
     private var isBannerTouching = false
     private var isBannerScrolling = false
+    private var hasRenderedBanners = false
 
     private val bannerPageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
         override fun onPageScrollStateChanged(state: Int) {
@@ -97,7 +98,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         initClick()
         observeCollectState()
         startBannerAutoScroll()
-        viewModel.refreshHomeData()
+        viewModel.loadHomeDataIfNeeded()
     }
 
     private fun initClick() {
@@ -132,12 +133,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         is UiState.Success -> {
                             binding.swipeRefresh.isRefreshing = false
                             val homeData = state.data
-                            if (homeData.isRefresh) {
+                            if (homeData.isRefresh || !hasRenderedBanners) {
                                 updateBanners(homeData.banners)
-                                articleAdapter.submitList(homeData.articles)
-                            } else {
-                                articleAdapter.addList(homeData.articles)
                             }
+                            articleAdapter.submitList(homeData.articles)
                             binding.stateLayout.showContent()
                         }
 
@@ -152,6 +151,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private fun updateBanners(banners: List<Banner>) {
+        hasRenderedBanners = true
         bannerAdapter.submitList(banners)
 
         if (banners.isEmpty()) {
@@ -234,6 +234,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         getBannerRecyclerView()?.removeOnItemTouchListener(bannerTouchListener)
         binding.vpBanner.unregisterOnPageChangeCallback(bannerPageChangeCallback)
         binding.vpBanner.adapter = null
+        hasRenderedBanners = false
         _binding = null
     }
 
