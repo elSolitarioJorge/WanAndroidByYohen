@@ -4,9 +4,11 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.ggg.kt.wanandroidbyyohen.databinding.ItemSectionBinding
+import com.google.android.flexbox.AlignItems
 import com.google.android.flexbox.FlexDirection
 import com.google.android.flexbox.FlexWrap
 import com.google.android.flexbox.FlexboxLayoutManager
+import com.google.android.flexbox.JustifyContent
 
 class SectionAdapter<T>(
     private val getItemName: (T) -> String,
@@ -52,6 +54,8 @@ class SectionAdapter<T>(
             ).apply {
                 flexDirection = FlexDirection.ROW
                 flexWrap = FlexWrap.WRAP
+                justifyContent = JustifyContent.FLEX_START
+                alignItems = AlignItems.FLEX_START
             }
             binding.rvTags.adapter = tagAdapter
         }

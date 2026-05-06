@@ -1,7 +1,6 @@
 package com.ggg.kt.wanandroidbyyohen.ui.navigation
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -107,7 +106,6 @@ class SideCategoryAdapter<T>(
         fun bindSelected(selected: Boolean) {
             binding.root.isSelected = selected
             binding.tvCategory.isSelected = selected
-            binding.viewIndicator.visibility = if (selected) View.VISIBLE else View.INVISIBLE
         }
     }
 
@@ -120,8 +118,6 @@ class SideCategoryAdapter<T>(
             ?: return
         itemView.isSelected = selected
         itemView.findViewById<TextView>(R.id.tv_category)?.isSelected = selected
-        itemView.findViewById<View>(R.id.view_indicator)?.visibility =
-            if (selected) View.VISIBLE else View.INVISIBLE
     }
 
     private companion object {
