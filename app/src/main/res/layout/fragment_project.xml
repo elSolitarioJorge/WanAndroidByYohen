@@ -1,24 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.ggg.kt.wanandroidbyyohen.ui.widget.StateFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/state_layout">
+    android:background="#F8FAFC"
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#F8FAFC"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:elevation="4dp"
+        android:orientation="vertical"
+        android:outlineAmbientShadowColor="#11000000"
+        android:outlineSpotShadowColor="#11000000"
+        tools:targetApi="28">
 
         <TextView
             android:id="@+id/top_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingHorizontal="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="4dp"
             android:text="项目"
             android:textColor="#1E293B"
-            android:textSize="24sp"
+            android:textSize="28sp"
             android:textStyle="bold" />
 
         <com.google.android.material.tabs.TabLayout
@@ -26,25 +34,29 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:background="#00000000"
-            app:tabIndicatorColor="#6366F1"
-            app:tabIndicatorHeight="3dp"
+            app:tabIndicator="@drawable/shape_tab_indicator_pill"
             app:tabIndicatorFullWidth="false"
             app:tabMode="scrollable"
+            app:tabPaddingEnd="16dp"
+            app:tabPaddingStart="16dp"
             app:tabRippleColor="#1A6366F1"
             app:tabSelectedTextColor="#6366F1"
             app:tabTextAppearance="@style/TextAppearance.AppCompat.Small"
             app:tabTextColor="#64748B" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#E2E8F0" />
+    </LinearLayout>
+
+    <com.ggg.kt.wanandroidbyyohen.ui.widget.StateFrameLayout
+        android:id="@+id/state_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/view_pager"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-    </LinearLayout>
+            android:layout_height="match_parent" />
 
-</com.ggg.kt.wanandroidbyyohen.ui.widget.StateFrameLayout>
+    </com.ggg.kt.wanandroidbyyohen.ui.widget.StateFrameLayout>
+
+</LinearLayout>
