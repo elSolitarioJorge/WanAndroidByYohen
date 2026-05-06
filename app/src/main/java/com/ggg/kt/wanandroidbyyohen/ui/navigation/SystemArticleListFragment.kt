@@ -33,7 +33,7 @@ class SystemArticleListFragment : Fragment() {
             onItemClick = { article ->
                 ArticleNavigator.openArticle(requireContext(), article)
             },
-            onCollectClick = { article ->
+            onActionClick = { article ->
                 handleCollectClick(article)
             }
         )

@@ -1,5 +1,6 @@
 package com.ggg.kt.wanandroidbyyohen.ui.common
 
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,8 +14,15 @@ import com.ggg.kt.wanandroidbyyohen.databinding.ItemArticleBinding
 
 class ArticleAdapter(
     private val onItemClick: (Article) -> Unit,
-    private val onCollectClick: ((Article) -> Unit)
+    private val onActionClick: (Article) -> Unit,
+    private val actionMode: ArticleActionMode = ArticleActionMode.COLLECT
 ) : ListAdapter<Article, ArticleAdapter.ArticleViewHolder>(ArticleDiffCallback()) {
+
+    enum class ArticleActionMode {
+        COLLECT,
+        COLLECTED,
+        SHARED
+    }
 
     fun addList(newList: List<Article>) {
         if (newList.isEmpty()) return
@@ -46,7 +54,8 @@ class ArticleAdapter(
         return ArticleViewHolder(
             binding = binding,
             onItemClick = onItemClick,
-            onCollectClick = onCollectClick
+            onActionClick = onActionClick,
+            actionMode = actionMode
         )
     }
 
@@ -56,7 +65,7 @@ class ArticleAdapter(
 
     override fun onBindViewHolder(holder: ArticleViewHolder, position: Int, payloads: List<Any?>) {
         if (payloads.contains(PAYLOAD_COLLECT)) {
-            holder.bindCollect(getItem(position))
+            holder.bindAction(getItem(position))
         } else {
             holder.bind(getItem(position))
         }
@@ -65,31 +74,73 @@ class ArticleAdapter(
     class ArticleViewHolder(
         private val binding: ItemArticleBinding,
         private val onItemClick: (Article) -> Unit,
-        private val onCollectClick: ((Article) -> Unit)
+        private val onActionClick: (Article) -> Unit,
+        private val actionMode: ArticleActionMode
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(article: Article) {
             binding.tvAuthor.text = article.displayAuthor()
             binding.tvTagTop.visibility = if (article.isTop) View.VISIBLE else View.GONE
             binding.tvTagCategory.text = if (!article.chapterName.isNullOrBlank()) article.chapterName else "未知"
-            binding.tvCategory.text = if (!article.superChapterName.isNullOrBlank()) article.superChapterName else "未知"
+            if (!article.superChapterName.isNullOrBlank()) {
+                binding.tvCategory.text = article.superChapterName
+                binding.tvCategory.visibility = View.VISIBLE
+            } else {
+                binding.tvCategory.visibility = View.GONE
+            }
             binding.tvTitle.text = article.title.toHighlightText()
-            binding.tvTime.text = if (!article.niceDate.isNullOrBlank()) article.niceDate else "未知"
+            binding.tvTime.text = buildTimeText(article)
 
-            bindCollect(article)
+            bindAction(article)
             binding.root.setOnClickListener {
                 onItemClick(article)
             }
         }
 
-        fun bindCollect(article: Article) {
+        fun bindAction(article: Article) {
+            when (actionMode) {
+                ArticleActionMode.COLLECT -> bindCollectAction(article)
+                ArticleActionMode.COLLECTED,
+                ArticleActionMode.SHARED -> bindDeleteAction()
+            }
+
+            binding.btnCollect.setOnClickListener {
+                onActionClick.invoke(article)
+            }
+        }
+
+        private fun buildTimeText(article: Article): String {
+            val time = if (!article.niceDate.isNullOrBlank()) article.niceDate else "未知"
+            return when (actionMode) {
+                ArticleActionMode.COLLECT -> time
+                ArticleActionMode.COLLECTED -> "收藏于 $time"
+                ArticleActionMode.SHARED -> "分享于 $time"
+            }
+        }
+
+        private fun bindCollectAction(article: Article) {
             binding.btnCollect.setImageResource(
                 if (article.collect) R.drawable.ic_heart_filled
                 else R.drawable.ic_heart_line
             )
-            binding.btnCollect.setOnClickListener {
-                onCollectClick.invoke(article)
-            }
+            binding.btnCollect.setBackgroundResource(resolveBorderlessSelectableBackground())
+            binding.btnCollect.contentDescription = if (article.collect) "取消收藏" else "收藏"
+        }
+
+        private fun bindDeleteAction() {
+            binding.btnCollect.setImageResource(R.drawable.ic_delete_line)
+            binding.btnCollect.setBackgroundResource(R.drawable.bg_icon_collect)
+            binding.btnCollect.contentDescription = "删除"
+        }
+
+        private fun resolveBorderlessSelectableBackground(): Int {
+            val typedValue = TypedValue()
+            binding.root.context.theme.resolveAttribute(
+                android.R.attr.selectableItemBackgroundBorderless,
+                typedValue,
+                true
+            )
+            return typedValue.resourceId
         }
     }
 

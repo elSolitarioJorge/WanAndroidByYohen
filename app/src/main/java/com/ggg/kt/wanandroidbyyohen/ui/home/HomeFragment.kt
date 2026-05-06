@@ -73,7 +73,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             onItemClick = { article ->
                 ArticleNavigator.openArticle(requireContext(), article)
             },
-            onCollectClick = { article ->
+            onActionClick = { article ->
                 viewModel.toggleCollect(article)
             }
         )

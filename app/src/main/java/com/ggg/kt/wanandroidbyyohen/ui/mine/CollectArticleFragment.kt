@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentCollectArticleBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
@@ -31,9 +32,10 @@ class CollectArticleFragment : Fragment() {
             onItemClick = { article ->
                 ArticleNavigator.openArticle(requireContext(), article)
             },
-            onCollectClick = { article ->
+            onActionClick = { article ->
                 viewModel.uncollect(article)
-            }
+            },
+            actionMode = ArticleAdapter.ArticleActionMode.COLLECTED
         )
     }
 
@@ -74,6 +76,8 @@ class CollectArticleFragment : Fragment() {
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
+
+        binding.layoutToolbar.applyTopBarInsets()
     }
 
     private fun initRecyclerView() {

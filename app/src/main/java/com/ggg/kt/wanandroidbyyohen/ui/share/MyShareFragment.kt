@@ -12,9 +12,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentMyShareBinding
+import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
 import kotlinx.coroutines.launch
 
@@ -25,14 +28,15 @@ class MyShareFragment : Fragment() {
 
     private val viewModel: MyShareViewModel by viewModels()
 
-    private val myShareAdapter by lazy {
-        MyShareAdapter(
+    private val articleAdapter by lazy {
+        ArticleAdapter(
             onItemClick = { article ->
                 ArticleNavigator.openArticle(requireContext(), article)
             },
-            onDeleteClick = { article ->
+            onActionClick = { article ->
                 viewModel.deleteArticle(article)
-            }
+            },
+            actionMode = ArticleAdapter.ArticleActionMode.SHARED
         )
     }
 
@@ -52,6 +56,7 @@ class MyShareFragment : Fragment() {
         initRecyclerView()
         initRefresh()
         initLoadMore()
+        initClick()
         observeData()
         observeDelete()
 
@@ -62,11 +67,13 @@ class MyShareFragment : Fragment() {
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
+
+        binding.layoutToolbar.applyTopBarInsets()
     }
 
     private fun initRecyclerView() {
         binding.rvArticles.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvArticles.adapter = myShareAdapter
+        binding.rvArticles.adapter = articleAdapter
     }
 
     private fun initRefresh() {
@@ -81,6 +88,15 @@ class MyShareFragment : Fragment() {
         }
     }
 
+    private fun initClick() {
+        binding.stateLayout.onRetryListener = {
+            viewModel.refresh()
+        }
+        binding.stateLayout.onEmptyActionListener = {
+            findNavController().navigate(R.id.share_article_fragment)
+        }
+    }
+
     private fun observeData() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -88,33 +104,35 @@ class MyShareFragment : Fragment() {
                     when (state) {
                         is UiState.Loading -> {
                             if (!binding.swipeRefresh.isRefreshing) {
-                                binding.tvState.visibility = View.VISIBLE
-                                binding.tvState.text = "加载中..."
+                                binding.stateLayout.showLoading()
                             }
                         }
 
                         is UiState.Success -> {
                             binding.swipeRefresh.isRefreshing = false
-                            binding.tvState.visibility = View.GONE
 
                             val data = state.data
 
                             if (data.isRefresh) {
-                                myShareAdapter.submitList(data.articles)
+                                articleAdapter.submitList(data.articles)
                             } else {
-                                myShareAdapter.addList(data.articles)
+                                articleAdapter.addList(data.articles)
                             }
 
                             if (data.isRefresh && data.articles.isEmpty()) {
-                                binding.tvState.visibility = View.VISIBLE
-                                binding.tvState.text = "暂无分享"
+                                binding.stateLayout.showEmpty(
+                                    title = "这里空空如也",
+                                    desc = "你还没有分享过任何内容",
+                                    btnText = "去分享"
+                                )
+                            } else {
+                                binding.stateLayout.showContent()
                             }
                         }
 
                         is UiState.Error -> {
                             binding.swipeRefresh.isRefreshing = false
-                            binding.tvState.visibility = View.VISIBLE
-                            binding.tvState.text = state.message
+                            binding.stateLayout.showError(state.message)
                         }
                     }
                 }
@@ -131,7 +149,7 @@ class MyShareFragment : Fragment() {
                         is UiState.Loading -> Unit
 
                         is UiState.Success -> {
-                            myShareAdapter.removeArticle(state.data.id)
+                            articleAdapter.removeArticle(state.data.id)
                             Toast.makeText(
                                 requireContext(),
                                 "删除成功",
