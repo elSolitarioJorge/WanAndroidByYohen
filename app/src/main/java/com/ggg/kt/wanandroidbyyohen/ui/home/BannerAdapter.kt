@@ -6,7 +6,6 @@ import androidx.recyclerview.widget.RecyclerView
 import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
-import coil3.request.placeholder
 import com.ggg.kt.wanandroidbyyohen.data.model.Banner
 import com.ggg.kt.wanandroidbyyohen.databinding.ItemHomeBannerBinding
 
@@ -63,7 +62,6 @@ class BannerAdapter(
         fun bind(banner: Banner) {
             binding.ivBanner.load(banner.imagePath) {
                 crossfade(true)
-                placeholder(android.R.drawable.ic_menu_gallery)
                 error(android.R.drawable.ic_menu_report_image)
             }
 

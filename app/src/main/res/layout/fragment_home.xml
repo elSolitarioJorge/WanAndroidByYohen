@@ -63,8 +63,7 @@
                 <androidx.viewpager2.widget.ViewPager2
                     android:id="@+id/vp_banner"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/shape_banner_placeholder" />
+                    android:layout_height="match_parent" />
 
             </com.google.android.material.card.MaterialCardView>
 
