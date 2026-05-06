@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+<TextView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/tv_tag"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginEnd="8dp"
+    android:layout_marginEnd="10dp"
     android:layout_marginBottom="10dp"
-    android:background="@drawable/bg_tag"
+    android:background="@drawable/shape_nav_tag"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     android:gravity="center"
-    android:minHeight="40dp"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:text="标签"
-    android:textColor="#5BAEDB"
-    android:textSize="15sp" />
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="8dp"
+    android:textColor="#475569"
+    android:textSize="13sp"
+    tools:text="Google开发者" />

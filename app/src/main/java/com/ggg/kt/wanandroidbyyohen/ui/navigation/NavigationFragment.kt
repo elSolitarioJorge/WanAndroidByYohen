@@ -1,6 +1,5 @@
 package com.ggg.kt.wanandroidbyyohen.ui.navigation
 
-import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.data.model.Chapter
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentNavigationBinding
@@ -27,12 +27,17 @@ class NavigationFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: NavigationViewModel by viewModels()
+    private val currentMode get() = viewModel.currentMode
 
-    private var currentMode = PageMode.NAVIGATION
-    private var navigationSections: List<SectionUi<Article>> = emptyList()
-    private var systemSections: List<SectionUi<Chapter>> = emptyList()
+    private var suppressSectionScrollSync = false
 
-    private var isProgrammaticScroll = true
+    private val categoryLayoutManager by lazy {
+        LinearLayoutManager(requireContext())
+    }
+
+    private val sectionLayoutManager by lazy {
+        LinearLayoutManager(requireContext())
+    }
 
     private val navigationCategoryAdapter by lazy {
         SideCategoryAdapter<SectionUi<Article>>(
@@ -70,10 +75,6 @@ class NavigationFragment : Fragment() {
         )
     }
 
-    private val sectionLayoutManager by lazy {
-        LinearLayoutManager(requireContext())
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -86,52 +87,66 @@ class NavigationFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        initInsets()
         initRecyclerView()
         initTopTabs()
+        initStateActions()
         initSectionScrollListener()
         observeData()
-        switchMode(PageMode.NAVIGATION)
+        switchMode(viewModel.currentMode, force = true)
+    }
+
+    private fun initInsets() {
+        binding.layoutTopTabs.applyTopBarInsets()
     }
 
     private fun initRecyclerView() {
-        binding.rvCategories.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvCategories.layoutManager = categoryLayoutManager
         binding.rvSections.layoutManager = sectionLayoutManager
     }
 
     private fun initTopTabs() {
         binding.tvNavigationTab.setOnClickListener {
-            switchMode(PageMode.NAVIGATION)
+            switchMode(NavigationPageMode.NAVIGATION)
         }
 
         binding.tvSystemTab.setOnClickListener {
-            switchMode(PageMode.SYSTEM)
+            switchMode(NavigationPageMode.SYSTEM)
+        }
+    }
+
+    private fun initStateActions() {
+        binding.stateLayout.onRetryListener = {
+            when (currentMode) {
+                NavigationPageMode.NAVIGATION -> viewModel.refreshNavigationList()
+                NavigationPageMode.SYSTEM -> viewModel.refreshSystemTree()
+            }
         }
     }
 
     private fun initSectionScrollListener() {
         binding.rvSections.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
-                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    isProgrammaticScroll = false
-                }
-            }
-
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                if (isProgrammaticScroll) return
 
                 val firstVisiblePosition = sectionLayoutManager.findFirstVisibleItemPosition()
                 if (firstVisiblePosition == RecyclerView.NO_POSITION) return
 
-                when (currentMode) {
-                    PageMode.NAVIGATION -> {
-                        navigationCategoryAdapter.select(firstVisiblePosition)
-                    }
+                val firstView = sectionLayoutManager.findViewByPosition(firstVisiblePosition)
+                viewModel.saveScrollState(
+                    mode = currentMode,
+                    position = firstVisiblePosition,
+                    offset = firstView?.top ?: 0
+                )
+                updateStickyHeader(firstVisiblePosition)
 
-                    PageMode.SYSTEM -> {
-                        systemCategoryAdapter.select(firstVisiblePosition)
-                    }
+                if (suppressSectionScrollSync) return
+
+                if (viewModel.getSelectedPosition(currentMode) != firstVisiblePosition) {
+                    updateSelectedCategory(
+                        position = firstVisiblePosition,
+                        scrollLeft = true
+                    )
                 }
             }
         })
@@ -146,26 +161,8 @@ class NavigationFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.navigationState.collect { state ->
-                    if (currentMode != PageMode.NAVIGATION) return@collect
-
-                    when (state) {
-                        is UiState.Loading -> showLoading()
-
-                        is UiState.Success -> {
-                            navigationSections = state.data.map {
-                                SectionUi(
-                                    id = it.cid,
-                                    title =  it.name,
-                                    items = it.articles
-                                )
-                            }
-                            showContent()
-                            navigationCategoryAdapter.submitList(navigationSections)
-                            navigationSectionAdapter.submitList(navigationSections)
-                            selectCategory(0)
-                        }
-
-                        is UiState.Error -> showError(state.message)
+                    if (currentMode == NavigationPageMode.NAVIGATION) {
+                        renderNavigationState(state)
                     }
                 }
             }
@@ -176,104 +173,232 @@ class NavigationFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.systemState.collect { state ->
-                    if (currentMode != PageMode.SYSTEM) return@collect
-
-                    when (state) {
-                        is UiState.Loading -> showLoading()
-
-                        is UiState.Success -> {
-                            systemSections = state.data.map {
-                                SectionUi(
-                                    id = it.id,
-                                    title = it.name,
-                                    items = it.children.orEmpty()
-                                )
-                            }
-                            showContent()
-                            systemCategoryAdapter.submitList(systemSections)
-                            systemSectionAdapter.submitList(systemSections)
-                            selectCategory(0)
-                        }
-
-                        is UiState.Error -> showError(state.message)
+                    if (currentMode == NavigationPageMode.SYSTEM) {
+                        renderSystemState(state)
                     }
                 }
             }
         }
     }
 
-    private fun switchMode(mode: PageMode) {
-        currentMode = mode
+    private fun switchMode(
+        mode: NavigationPageMode,
+        force: Boolean = false
+    ) {
+        val previousMode = currentMode
+        if (!force && previousMode == mode) return
+
+        if (!force) {
+            saveCurrentScrollState(previousMode)
+        }
+
+        viewModel.setCurrentMode(mode)
         updateTopTabStyle(mode)
+        bindAdapters(mode)
+        renderCurrentState(mode)
 
         when (mode) {
-            PageMode.NAVIGATION -> {
+            NavigationPageMode.NAVIGATION -> viewModel.loadNavigationListIfNeeded()
+            NavigationPageMode.SYSTEM -> viewModel.loadSystemTreeIfNeeded()
+        }
+    }
+
+    private fun bindAdapters(mode: NavigationPageMode) {
+        when (mode) {
+            NavigationPageMode.NAVIGATION -> {
                 binding.rvCategories.adapter = navigationCategoryAdapter
                 binding.rvSections.adapter = navigationSectionAdapter
-
-                if (navigationSections.isEmpty()) {
-                    viewModel.loadNavigationList()
-                } else {
-                    showContent()
-                    navigationCategoryAdapter.submitList(navigationSections)
-                    navigationSectionAdapter.submitList(navigationSections)
-                    selectCategory(0)
-                }
             }
 
-            PageMode.SYSTEM -> {
+            NavigationPageMode.SYSTEM -> {
                 binding.rvCategories.adapter = systemCategoryAdapter
                 binding.rvSections.adapter = systemSectionAdapter
-                if (systemSections.isEmpty()) {
-                    viewModel.loadSystemTree()
-                } else {
-                    showContent()
-                    systemCategoryAdapter.submitList(systemSections)
-                    systemSectionAdapter.submitList(systemSections)
-                    selectCategory(0)
+            }
+        }
+    }
+
+    private fun renderCurrentState(mode: NavigationPageMode) {
+        when (mode) {
+            NavigationPageMode.NAVIGATION -> renderNavigationState(viewModel.navigationState.value)
+            NavigationPageMode.SYSTEM -> renderSystemState(viewModel.systemState.value)
+        }
+    }
+
+    private fun renderNavigationState(state: UiState<List<SectionUi<Article>>>) {
+        when (state) {
+            is UiState.Loading -> showLoading()
+            is UiState.Success -> renderContent(
+                sections = state.data,
+                categoryAdapter = navigationCategoryAdapter,
+                sectionAdapter = navigationSectionAdapter
+            )
+
+            is UiState.Error -> showError(state.message)
+        }
+    }
+
+    private fun renderSystemState(state: UiState<List<SectionUi<Chapter>>>) {
+        when (state) {
+            is UiState.Loading -> showLoading()
+            is UiState.Success -> renderContent(
+                sections = state.data,
+                categoryAdapter = systemCategoryAdapter,
+                sectionAdapter = systemSectionAdapter
+            )
+
+            is UiState.Error -> showError(state.message)
+        }
+    }
+
+    private fun <T> renderContent(
+        sections: List<SectionUi<T>>,
+        categoryAdapter: SideCategoryAdapter<SectionUi<T>>,
+        sectionAdapter: SectionAdapter<T>
+    ) {
+        if (sections.isEmpty()) {
+            showEmpty()
+            return
+        }
+
+        showContent()
+        val selectedPosition = viewModel.getSelectedPosition(currentMode)
+        categoryAdapter.submitList(sections, selectedPosition)
+        sectionAdapter.submitList(sections)
+        restoreSavedListState(sections.size)
+    }
+
+    private fun restoreSavedListState(sectionCount: Int) {
+        if (sectionCount == 0) {
+            hideStickyHeader()
+            return
+        }
+
+        val mode = currentMode
+        val selectedPosition = viewModel.getSelectedPosition(mode)
+        val scrollState = viewModel.getScrollState(mode)
+
+        updateSelectedCategory(
+            position = selectedPosition,
+            scrollLeft = false
+        )
+        categoryLayoutManager.scrollToPositionWithOffset(selectedPosition, 0)
+
+        suppressSectionScrollSync = true
+        binding.rvSections.post {
+            val currentBinding = _binding
+            if (currentBinding != null && currentMode == mode) {
+                sectionLayoutManager.scrollToPositionWithOffset(
+                    scrollState.position,
+                    scrollState.offset
+                )
+                updateStickyHeader(scrollState.position)
+
+                currentBinding.rvSections.post {
+                    if (_binding != null) {
+                        suppressSectionScrollSync = false
+                        updateStickyHeader()
+                    }
                 }
             }
         }
     }
 
-    private fun updateTopTabStyle(mode: PageMode) {
-        val activeColor = 0xFF5BAEDB.toInt()
-        val inactiveColor = 0xFF9ACBE5.toInt()
-
-        if (mode == PageMode.NAVIGATION) {
-            binding.tvNavigationTab.setTextColor(activeColor)
-            binding.tvNavigationTab.setTypeface(null, Typeface.BOLD)
-
-            binding.tvSystemTab.setTextColor(inactiveColor)
-            binding.tvSystemTab.setTypeface(null, Typeface.BOLD)
-        } else {
-            binding.tvSystemTab.setTextColor(activeColor)
-            binding.tvSystemTab.setTypeface(null, Typeface.BOLD)
-
-            binding.tvNavigationTab.setTextColor(inactiveColor)
-            binding.tvNavigationTab.setTypeface(null, Typeface.BOLD)
-        }
+    private fun updateTopTabStyle(mode: NavigationPageMode) {
+        binding.tvNavigationTab.isSelected = mode == NavigationPageMode.NAVIGATION
+        binding.tvSystemTab.isSelected = mode == NavigationPageMode.SYSTEM
     }
 
     private fun onCategoryClick(position: Int) {
-        selectCategory(position)
-        isProgrammaticScroll = true
-        binding.rvSections.smoothScrollToPosition(position)
+        if (position !in 0 until viewModel.getSectionCount(currentMode)) return
+
+        updateSelectedCategory(
+            position = position,
+            scrollLeft = true
+        )
+
+        suppressSectionScrollSync = true
+        sectionLayoutManager.scrollToPositionWithOffset(position, 0)
+        viewModel.saveScrollState(
+            mode = currentMode,
+            position = position,
+            offset = 0
+        )
+        updateStickyHeader(position)
+
+        binding.rvSections.postDelayed(
+            {
+                if (_binding != null) {
+                    suppressSectionScrollSync = false
+                    updateStickyHeader()
+                }
+            },
+            CATEGORY_CLICK_SCROLL_SUPPRESS_MS
+        )
     }
 
-    private fun selectCategory(position: Int) {
-        when (currentMode) {
-            PageMode.NAVIGATION -> {
-                if (position !in navigationSections.indices) return
-                navigationCategoryAdapter.select(position)
-            }
+    private fun updateSelectedCategory(
+        position: Int,
+        scrollLeft: Boolean
+    ) {
+        if (position !in 0 until viewModel.getSectionCount(currentMode)) return
 
-            PageMode.SYSTEM -> {
-                if (position !in systemSections.indices) return
-                systemCategoryAdapter.select(position)
-            }
+        viewModel.saveSelectedPosition(currentMode, position)
+        when (currentMode) {
+            NavigationPageMode.NAVIGATION -> navigationCategoryAdapter.select(position)
+            NavigationPageMode.SYSTEM -> systemCategoryAdapter.select(position)
         }
-        binding.rvCategories.smoothScrollToPosition(position)
+
+        if (scrollLeft) {
+            binding.rvCategories.smoothScrollToPosition(position)
+        }
+    }
+
+    private fun updateStickyHeader(
+        firstVisiblePosition: Int = sectionLayoutManager.findFirstVisibleItemPosition()
+    ) {
+        if (firstVisiblePosition == RecyclerView.NO_POSITION) {
+            hideStickyHeader()
+            return
+        }
+
+        val title = viewModel.getSectionTitle(currentMode, firstVisiblePosition)
+        if (title == null) {
+            hideStickyHeader()
+            return
+        }
+
+        binding.layoutStickyHeader.visibility = View.VISIBLE
+        binding.tvStickyHeaderTitle.text = title
+
+        val nextView = sectionLayoutManager.findViewByPosition(firstVisiblePosition + 1)
+        val stickyHeaderHeight = binding.layoutStickyHeader.height
+        binding.layoutStickyHeader.translationY = if (
+            nextView != null &&
+            stickyHeaderHeight > 0 &&
+            nextView.top < stickyHeaderHeight
+        ) {
+            (nextView.top - stickyHeaderHeight).toFloat()
+        } else {
+            0f
+        }
+    }
+
+    private fun hideStickyHeader() {
+        binding.layoutStickyHeader.visibility = View.GONE
+        binding.layoutStickyHeader.translationY = 0f
+    }
+
+    private fun saveCurrentScrollState(mode: NavigationPageMode = currentMode) {
+        if (viewModel.getSectionCount(mode) == 0) return
+
+        val position = sectionLayoutManager.findFirstVisibleItemPosition()
+        if (position == RecyclerView.NO_POSITION) return
+
+        viewModel.saveScrollState(
+            mode = mode,
+            position = position,
+            offset = sectionLayoutManager.findViewByPosition(position)?.top ?: 0
+        )
     }
 
     private fun openSystemArticles(chapter: Chapter) {
@@ -287,30 +412,34 @@ class NavigationFragment : Fragment() {
     }
 
     private fun showLoading() {
-        binding.contentGroup.visibility = View.GONE
-        binding.tvState.visibility = View.VISIBLE
-        binding.tvState.text = "加载中..."
+        hideStickyHeader()
+        binding.stateLayout.showLoading()
     }
 
     private fun showContent() {
-        binding.tvState.visibility = View.GONE
-        binding.contentGroup.visibility = View.VISIBLE
+        binding.stateLayout.showContent()
+    }
+
+    private fun showEmpty() {
+        hideStickyHeader()
+        binding.stateLayout.showEmpty(
+            title = "暂无数据",
+            btnText = null
+        )
     }
 
     private fun showError(message: String) {
-        binding.contentGroup.visibility = View.GONE
-        binding.tvState.visibility = View.VISIBLE
-        binding.tvState.text = message
+        hideStickyHeader()
+        binding.stateLayout.showError(message)
     }
 
-
     override fun onDestroyView() {
+        saveCurrentScrollState()
         super.onDestroyView()
         _binding = null
     }
 
-    private enum class PageMode {
-        NAVIGATION,
-        SYSTEM
+    private companion object {
+        const val CATEGORY_CLICK_SCROLL_SUPPRESS_MS = 200L
     }
 }
