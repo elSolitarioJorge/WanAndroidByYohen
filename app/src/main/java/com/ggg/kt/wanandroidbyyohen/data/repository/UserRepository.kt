@@ -43,7 +43,11 @@ class UserRepository {
                 RetrofitClient.api.register(username, password, repassword)
             }
         ) {
-            is UiState.Success -> UiState.Success(result.data)
+            is UiState.Success -> {
+                val user = result.data
+                UserStore.saveLoginUser(user)
+                UiState.Success(user)
+            }
 
             is UiState.Error -> UiState.Error(result.message)
 

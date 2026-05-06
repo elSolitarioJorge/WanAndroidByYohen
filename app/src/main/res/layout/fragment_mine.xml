@@ -70,7 +70,8 @@
             app:layout_constraintBottom_toBottomOf="@+id/tv_user_info"
             app:layout_constraintEnd_toEndOf="@+id/tv_user_info"
             app:layout_constraintStart_toStartOf="@+id/tv_user_info"
-            app:layout_constraintTop_toTopOf="@+id/tv_username" />
+            app:layout_constraintTop_toTopOf="@+id/tv_avatar"
+            tools:visibility="visible"/>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cv_dashboard"

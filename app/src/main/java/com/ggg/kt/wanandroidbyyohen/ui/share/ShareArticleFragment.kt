@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentShareArticleBinding
 import kotlinx.coroutines.launch
 
@@ -34,8 +35,13 @@ class ShareArticleFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        initInsets()
         initClick()
         observeData()
+    }
+
+    private fun initInsets() {
+        binding.layoutContainer.applyTopBarInsets()
     }
 
     private fun initClick() {

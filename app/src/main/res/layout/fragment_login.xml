@@ -1,71 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/login_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:background="#F8FAFC"
+    android:fillViewport="true">
 
-    <ImageView
-        android:id="@+id/btn_back"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:src="@drawable/ic_back"
-        android:scaleType="centerInside"/>
-
-    <TextView
-        android:id="@+id/tv_login_title"
+    <LinearLayout
+        android:id="@+id/layout_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="登录 WanAndroid"
-        android:textColor="#222222"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        android:orientation="vertical"
+        android:padding="24dp">
 
-    <EditText
-        android:id="@+id/et_username"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="32dp"
-        android:hint="请输入用户名"
-        android:inputType="text"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp" />
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="-16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="12dp"
+            android:src="@drawable/ic_back"
+            app:tint="#475569" />
 
-    <EditText
-        android:id="@+id/et_password"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="16dp"
-        android:hint="请输入密码"
-        android:inputType="textPassword"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp" />
+        <TextView
+            android:id="@+id/tv_login_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="欢迎回来"
+            android:textColor="#1E293B"
+            android:textSize="30sp"
+            android:textStyle="bold" />
 
-    <Button
-        android:id="@+id/btn_login"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="28dp"
-        android:text="登录" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="登录 WanAndroid 探索更多干货"
+            android:textColor="#64748B"
+            android:textSize="15sp" />
 
-    <TextView
-        android:id="@+id/tv_register"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:gravity="center"
-        android:text="没有账号？注册"
-        android:textColor="#3B82F6"
-        android:textSize="14sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
+            android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tv_state"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textColor="#F44336"
-        android:textSize="14sp" />
+            <EditText
+                android:id="@+id/et_username"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@drawable/selector_input_bg"
+                android:drawableStart="@drawable/ic_user_line"
+                android:drawablePadding="12dp"
+                android:elevation="1dp"
+                android:hint="请输入用户名"
+                android:inputType="text"
+                android:paddingHorizontal="16dp"
+                android:textColor="#1E293B"
+                android:textColorHint="#94A3B8"
+                android:textSize="15sp" />
 
-</LinearLayout>
+            <EditText
+                android:id="@+id/et_password"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/selector_input_bg"
+                android:drawableStart="@drawable/ic_lock_line"
+                android:drawablePadding="12dp"
+                android:elevation="1dp"
+                android:hint="请输入密码"
+                android:inputType="textPassword"
+                android:paddingHorizontal="16dp"
+                android:textColor="#1E293B"
+                android:textColorHint="#94A3B8"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tv_state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:minHeight="20dp"
+                android:textColor="#EF4444"
+                android:textSize="13sp"
+                tools:text="账号或密码错误，请重试" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_login"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/shape_btn_primary"
+                android:text="登录"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:elevation="4dp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:minHeight="40dp" />
+
+        <LinearLayout
+            android:id="@+id/layout_register"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="还没有账号？ "
+                android:textColor="#64748B"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tv_register"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="立即注册"
+                android:textColor="#6366F1"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

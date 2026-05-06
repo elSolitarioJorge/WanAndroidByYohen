@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentLoginBinding
 import kotlinx.coroutines.launch
 
@@ -33,8 +34,13 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        initInsets()
         initClick()
         observeData()
+    }
+
+    private fun initInsets() {
+        binding.layoutContainer.applyTopBarInsets()
     }
 
     private fun initClick() {
@@ -67,16 +73,19 @@ class LoginFragment : Fragment() {
                         is UiState.Loading -> {
                             binding.tvState.text = "处理中..."
                             binding.btnLogin.isEnabled = false
+                            binding.tvRegister.isEnabled = false
                         }
 
                         is UiState.Success -> {
                             binding.btnLogin.isEnabled = true
+                            binding.tvRegister.isEnabled = true
                             Toast.makeText(requireContext(), "登录成功", Toast.LENGTH_SHORT).show()
                             findNavController().popBackStack()
                         }
 
                         is UiState.Error -> {
                             binding.btnLogin.isEnabled = true
+                            binding.tvRegister.isEnabled = true
                             binding.tvState.text = state.message
                         }
                     }
