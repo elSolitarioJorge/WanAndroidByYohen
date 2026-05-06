@@ -71,7 +71,7 @@ class LoginFragment : Fragment() {
 
                         is UiState.Success -> {
                             binding.btnLogin.isEnabled = true
-                            Toast.makeText(requireContext(), "登录成功", Toast.LENGTH_SHORT)
+                            Toast.makeText(requireContext(), "登录成功", Toast.LENGTH_SHORT).show()
                             findNavController().popBackStack()
                         }
 

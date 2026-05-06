@@ -10,6 +10,7 @@ import com.ggg.kt.wanandroidbyyohen.data.model.UserInfoData
 object UserStore {
     private const val PREF_NAME = "user_store"
     private const val KEY_IS_LOGIN = "is_login"
+    private const val KEY_USER_ID = "user_id"
     private const val KEY_USERNAME = "username"
     private const val KEY_NICKNAME = "nickname"
     private const val KEY_COIN_COUNT = "coin_count"
@@ -29,6 +30,7 @@ object UserStore {
 
         sharedPreferences.edit {
             putBoolean(KEY_IS_LOGIN, true)
+            putInt(KEY_USER_ID, user?.id ?: 0)
             putString(KEY_USERNAME, user?.username.orEmpty())
             putString(KEY_NICKNAME, user?.nickname.orEmpty())
             putInt(KEY_COIN_COUNT, coin?.coinCount ?: 0)
@@ -40,6 +42,7 @@ object UserStore {
     fun saveLoginUser(user: User){
         sharedPreferences.edit {
             putBoolean(KEY_IS_LOGIN, true)
+            putInt(KEY_USER_ID, user.id)
             putString(KEY_USERNAME, user.username)
             putString(KEY_NICKNAME, user.nickname.orEmpty())
         }
@@ -52,6 +55,7 @@ object UserStore {
     fun getLocalUserInfo(): UserInfoData? {
         if (!isLogin()) return null
 
+        val userId = sharedPreferences.getInt(KEY_USER_ID, 0)
         val username = sharedPreferences.getString(KEY_USERNAME, "").orEmpty()
         val nickname = sharedPreferences.getString(KEY_NICKNAME, "").orEmpty()
         val coinCount = sharedPreferences.getInt(KEY_COIN_COUNT, 0)
@@ -60,6 +64,7 @@ object UserStore {
 
         return UserInfoData(
             userInfo = User(
+                id = userId,
                 username = username,
                 nickname = nickname
             ),
