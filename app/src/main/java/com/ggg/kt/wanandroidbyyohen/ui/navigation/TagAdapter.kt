@@ -12,6 +12,8 @@ class TagAdapter<T>(
     private val items = mutableListOf<T>()
 
     fun submitList(newList: List<T>) {
+        if (items == newList) return
+
         items.clear()
         items.addAll(newList)
         notifyDataSetChanged()

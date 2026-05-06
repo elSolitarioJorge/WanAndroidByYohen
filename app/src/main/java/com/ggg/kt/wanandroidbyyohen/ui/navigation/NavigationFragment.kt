@@ -102,6 +102,7 @@ class NavigationFragment : Fragment() {
 
     private fun initRecyclerView() {
         binding.rvCategories.layoutManager = categoryLayoutManager
+        binding.rvCategories.itemAnimator = null
         binding.rvSections.layoutManager = sectionLayoutManager
     }
 
@@ -126,6 +127,16 @@ class NavigationFragment : Fragment() {
 
     private fun initSectionScrollListener() {
         binding.rvSections.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                if (
+                    newState == RecyclerView.SCROLL_STATE_IDLE &&
+                    !suppressSectionScrollSync
+                ) {
+                    ensureCategoryVisible(viewModel.getSelectedPosition(currentMode))
+                }
+            }
+
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
 
@@ -145,7 +156,7 @@ class NavigationFragment : Fragment() {
                 if (viewModel.getSelectedPosition(currentMode) != firstVisiblePosition) {
                     updateSelectedCategory(
                         position = firstVisiblePosition,
-                        scrollLeft = true
+                        keepCategoryVisible = true
                     )
                 }
             }
@@ -279,7 +290,7 @@ class NavigationFragment : Fragment() {
 
         updateSelectedCategory(
             position = selectedPosition,
-            scrollLeft = false
+            keepCategoryVisible = false
         )
         categoryLayoutManager.scrollToPositionWithOffset(selectedPosition, 0)
 
@@ -313,7 +324,7 @@ class NavigationFragment : Fragment() {
 
         updateSelectedCategory(
             position = position,
-            scrollLeft = true
+            keepCategoryVisible = true
         )
 
         suppressSectionScrollSync = true
@@ -338,19 +349,46 @@ class NavigationFragment : Fragment() {
 
     private fun updateSelectedCategory(
         position: Int,
-        scrollLeft: Boolean
+        keepCategoryVisible: Boolean
     ) {
         if (position !in 0 until viewModel.getSectionCount(currentMode)) return
 
         viewModel.saveSelectedPosition(currentMode, position)
         when (currentMode) {
-            NavigationPageMode.NAVIGATION -> navigationCategoryAdapter.select(position)
-            NavigationPageMode.SYSTEM -> systemCategoryAdapter.select(position)
+            NavigationPageMode.NAVIGATION -> {
+                navigationCategoryAdapter.select(position, binding.rvCategories)
+            }
+
+            NavigationPageMode.SYSTEM -> {
+                systemCategoryAdapter.select(position, binding.rvCategories)
+            }
         }
 
-        if (scrollLeft) {
-            binding.rvCategories.smoothScrollToPosition(position)
+        if (keepCategoryVisible) {
+            ensureCategoryVisible(position)
         }
+    }
+
+    private fun ensureCategoryVisible(position: Int) {
+        val firstVisiblePosition = categoryLayoutManager.findFirstVisibleItemPosition()
+        val lastVisiblePosition = categoryLayoutManager.findLastVisibleItemPosition()
+        if (
+            firstVisiblePosition == RecyclerView.NO_POSITION ||
+            lastVisiblePosition == RecyclerView.NO_POSITION
+        ) {
+            categoryLayoutManager.scrollToPositionWithOffset(position, 0)
+            return
+        }
+
+        val visibleWindowSize = lastVisiblePosition - firstVisiblePosition
+        val targetPosition = if (position < firstVisiblePosition) {
+            position
+        } else if (position > lastVisiblePosition) {
+            (position - visibleWindowSize).coerceAtLeast(0)
+        } else {
+            return
+        }
+        categoryLayoutManager.scrollToPositionWithOffset(targetPosition, 0)
     }
 
     private fun updateStickyHeader(

@@ -16,6 +16,8 @@ class SectionAdapter<T>(
     private val sections = mutableListOf<SectionUi<T>>()
 
     fun submitList(newList: List<SectionUi<T>>) {
+        if (sections == newList) return
+
         sections.clear()
         sections.addAll(newList)
         notifyDataSetChanged()
