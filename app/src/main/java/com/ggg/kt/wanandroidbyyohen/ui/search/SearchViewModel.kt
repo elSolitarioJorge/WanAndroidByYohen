@@ -33,6 +33,7 @@ class SearchViewModel : ViewModel() {
     private var currentPage = 0
     private var hasMore = true
     private var isLoadingMore = false
+    private var currentData: SearchArticleData? = null
 
     fun loadHotKeys() {
         viewModelScope.launch {
@@ -52,6 +53,7 @@ class SearchViewModel : ViewModel() {
         currentPage = 0
         hasMore = true
         isLoadingMore = false
+        currentData = null
 
         viewModelScope.launch {
             _searchState.value = UiState.Loading
@@ -62,11 +64,13 @@ class SearchViewModel : ViewModel() {
                 isRefresh = true
             )
 
-            _searchState.value = result
-
             if (result is UiState.Success) {
+                currentData = result.data
                 hasMore = result.data.hasMore
                 currentPage++
+                _searchState.value = UiState.Success(result.data)
+            } else {
+                _searchState.value = result
             }
         }
     }
@@ -89,11 +93,19 @@ class SearchViewModel : ViewModel() {
                 isRefresh = false
             )
 
-            _searchState.value = result
-
             if (result is UiState.Success) {
+                val oldData = currentData
+                val mergedData = oldData?.copy(
+                    articles = oldData.articles + result.data.articles,
+                    isRefresh = false,
+                    hasMore = result.data.hasMore
+                ) ?: result.data
+                currentData = mergedData
                 hasMore = result.data.hasMore
                 currentPage++
+                _searchState.value = UiState.Success(mergedData)
+            } else {
+                _searchState.value = result
             }
 
             isLoadingMore = false
@@ -111,7 +123,17 @@ class SearchViewModel : ViewModel() {
             }
 
             _collectState.value = when (result) {
-                is UiState.Success -> UiState.Success(article.id to !article.collect)
+                is UiState.Success -> {
+                    val collect = !article.collect
+                    val updatedData = currentData?.copy(
+                        articles = currentData?.articles.orEmpty().map {
+                            if (it.id == article.id) it.copy(collect = collect) else it
+                        }
+                    )
+                    currentData = updatedData
+                    updatedData?.let { _searchState.value = UiState.Success(it) }
+                    UiState.Success(article.id to collect)
+                }
                 is UiState.Error -> UiState.Error(result.message)
                 is UiState.Loading -> UiState.Loading
             }

@@ -25,6 +25,7 @@ class SystemArticleListViewModel : ViewModel() {
     private var currentPage = 0
     private var hasMore = true
     private var isLoadingMore = false
+    private var currentData: SystemArticleData? = null
 
     fun setCid(categoryId: Int) {
         if (cid == -1) {
@@ -39,6 +40,7 @@ class SystemArticleListViewModel : ViewModel() {
             currentPage = 0
             hasMore = true
             isLoadingMore = false
+            currentData = null
 
             _articleState.value = UiState.Loading
             val result = repository.getSystemArticles(
@@ -46,10 +48,13 @@ class SystemArticleListViewModel : ViewModel() {
                 cid = cid,
                 isRefresh = true
             )
-            _articleState.value = result
             if (result is UiState.Success) {
+                currentData = result.data
                 hasMore = result.data.hasMore
                 currentPage++
+                _articleState.value = UiState.Success(result.data)
+            } else {
+                _articleState.value = result
             }
         }
     }
@@ -67,10 +72,19 @@ class SystemArticleListViewModel : ViewModel() {
                 isRefresh = false
             )
 
-            _articleState.value = result
             if (result is UiState.Success) {
+                val oldData = currentData
+                val mergedData = oldData?.copy(
+                    articles = oldData.articles + result.data.articles,
+                    isRefresh = false,
+                    hasMore = result.data.hasMore
+                ) ?: result.data
+                currentData = mergedData
                 hasMore = result.data.hasMore
                 currentPage++
+                _articleState.value = UiState.Success(mergedData)
+            } else {
+                _articleState.value = result
             }
             isLoadingMore = false
         }
@@ -87,7 +101,17 @@ class SystemArticleListViewModel : ViewModel() {
             }
 
             _collectState.value = when (result) {
-                is UiState.Success -> UiState.Success(article.id to !article.collect)
+                is UiState.Success -> {
+                    val collect = !article.collect
+                    val updatedData = currentData?.copy(
+                        articles = currentData?.articles.orEmpty().map {
+                            if (it.id == article.id) it.copy(collect = collect) else it
+                        }
+                    )
+                    currentData = updatedData
+                    updatedData?.let { _articleState.value = UiState.Success(it) }
+                    UiState.Success(article.id to collect)
+                }
                 is UiState.Error -> UiState.Error(result.message)
                 is UiState.Loading -> UiState.Loading
             }

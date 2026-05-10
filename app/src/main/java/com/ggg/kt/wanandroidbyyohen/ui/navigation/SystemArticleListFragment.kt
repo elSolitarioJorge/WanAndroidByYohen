@@ -66,7 +66,9 @@ class SystemArticleListFragment : Fragment() {
         initLoadMore()
         observeData()
         observeCollectState()
-        viewModel.refresh()
+        if (viewModel.articleState.value !is UiState.Success) {
+            viewModel.refresh()
+        }
     }
 
     private fun initToolbar() {
@@ -110,11 +112,7 @@ class SystemArticleListFragment : Fragment() {
                             binding.tvState.visibility = View.GONE
 
                             val data = state.data
-                            if (data.isRefresh) {
-                                articleAdapter.submitList(data.articles)
-                            } else {
-                                articleAdapter.addList(data.articles)
-                            }
+                            articleAdapter.submitList(data.articles)
                         }
 
                         is UiState.Error -> {

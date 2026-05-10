@@ -23,12 +23,14 @@ class CollectArticleViewModel : ViewModel() {
     private var currentPage = 0
     private var hasMore = true
     private var isLoadingMore = false
+    private var currentData: CollectArticleData? = null
 
     fun refresh() {
         viewModelScope.launch {
             currentPage = 0
             hasMore = true
             isLoadingMore = false
+            currentData = null
 
             _collectArticleState.value = UiState.Loading
 
@@ -37,11 +39,13 @@ class CollectArticleViewModel : ViewModel() {
                 isRefresh = true
             )
 
-            _collectArticleState.value = result
-
             if (result is UiState.Success) {
+                currentData = result.data
                 hasMore = result.data.hasMore
                 currentPage++
+                _collectArticleState.value = UiState.Success(result.data)
+            } else {
+                _collectArticleState.value = result
             }
         }
     }
@@ -57,11 +61,19 @@ class CollectArticleViewModel : ViewModel() {
                 isRefresh = false
             )
 
-            _collectArticleState.value = result
-
             if (result is UiState.Success) {
+                val oldData = currentData
+                val mergedData = oldData?.copy(
+                    articles = oldData.articles + result.data.articles,
+                    isRefresh = false,
+                    hasMore = result.data.hasMore
+                ) ?: result.data
+                currentData = mergedData
                 hasMore = result.data.hasMore
                 currentPage++
+                _collectArticleState.value = UiState.Success(mergedData)
+            } else {
+                _collectArticleState.value = result
             }
 
             isLoadingMore = false
@@ -78,7 +90,14 @@ class CollectArticleViewModel : ViewModel() {
             )
 
             _uncollectState.value = when (result) {
-                is UiState.Success -> UiState.Success(article)
+                is UiState.Success -> {
+                    val updatedData = currentData?.copy(
+                        articles = currentData?.articles.orEmpty().filter { it.id != article.id }
+                    )
+                    currentData = updatedData
+                    updatedData?.let { _collectArticleState.value = UiState.Success(it) }
+                    UiState.Success(article)
+                }
                 is UiState.Error -> UiState.Error(result.message)
                 is UiState.Loading -> UiState.Loading
             }

@@ -25,12 +25,14 @@ class MyShareViewModel : ViewModel() {
     private var currentPage = 1
     private var hasMore = true
     private var isLoadingMore = false
+    private var currentData: MyShareArticleData? = null
 
     fun refresh() {
         viewModelScope.launch {
             currentPage = 1
             hasMore = true
             isLoadingMore = false
+            currentData = null
 
             _myShareState.value = UiState.Loading
 
@@ -39,11 +41,13 @@ class MyShareViewModel : ViewModel() {
                 isRefresh = true
             )
 
-            _myShareState.value = result
-
             if (result is UiState.Success) {
+                currentData = result.data
                 hasMore = result.data.hasMore
                 currentPage++
+                _myShareState.value = UiState.Success(result.data)
+            } else {
+                _myShareState.value = result
             }
         }
     }
@@ -59,11 +63,19 @@ class MyShareViewModel : ViewModel() {
                 isRefresh = false
             )
 
-            _myShareState.value = result
-
             if (result is UiState.Success) {
+                val oldData = currentData
+                val mergedData = oldData?.copy(
+                    articles = oldData.articles + result.data.articles,
+                    isRefresh = false,
+                    hasMore = result.data.hasMore
+                ) ?: result.data
+                currentData = mergedData
                 hasMore = result.data.hasMore
                 currentPage++
+                _myShareState.value = UiState.Success(mergedData)
+            } else {
+                _myShareState.value = result
             }
 
             isLoadingMore = false
@@ -77,7 +89,14 @@ class MyShareViewModel : ViewModel() {
             val result = repository.deleteMyShareArticle(article.id)
 
             _deleteState.value = when (result) {
-                is UiState.Success -> UiState.Success(article)
+                is UiState.Success -> {
+                    val updatedData = currentData?.copy(
+                        articles = currentData?.articles.orEmpty().filter { it.id != article.id }
+                    )
+                    currentData = updatedData
+                    updatedData?.let { _myShareState.value = UiState.Success(it) }
+                    UiState.Success(article)
+                }
                 is UiState.Error -> UiState.Error(result.message)
                 is UiState.Loading -> UiState.Loading
             }

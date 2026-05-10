@@ -59,7 +59,9 @@ class CollectArticleFragment : Fragment() {
         observeData()
         observeUncollect()
 
-        viewModel.refresh()
+        if (viewModel.collectArticleState.value !is UiState.Success) {
+            viewModel.refresh()
+        }
     }
 
     private fun initClick() {
@@ -113,11 +115,7 @@ class CollectArticleFragment : Fragment() {
 
                             val data = state.data
 
-                            if (data.isRefresh) {
-                                articleAdapter.submitList(data.articles)
-                            } else {
-                                articleAdapter.addList(data.articles)
-                            }
+                            articleAdapter.submitList(data.articles)
 
                             if (data.isRefresh && data.articles.isEmpty()) {
                                 binding.stateLayout.showEmpty(
