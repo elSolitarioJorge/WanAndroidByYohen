@@ -6,6 +6,8 @@ import com.ggg.kt.wanandroidbyyohen.app.AppContext
 import com.ggg.kt.wanandroidbyyohen.data.model.CoinInfo
 import com.ggg.kt.wanandroidbyyohen.data.model.User
 import com.ggg.kt.wanandroidbyyohen.data.model.UserInfoData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object UserStore {
     private const val PREF_NAME = "user_store"
@@ -24,62 +26,76 @@ object UserStore {
         )
     }
 
-    fun saveUserInfo(userInfoData: UserInfoData) {
-        val user = userInfoData.userInfo
-        val coin = userInfoData.coinInfo
+    suspend fun saveUserInfo(userInfoData: UserInfoData) {
+        withContext(Dispatchers.IO) {
+            val user = userInfoData.userInfo
+            val coin = userInfoData.coinInfo
 
-        sharedPreferences.edit {
-            putBoolean(KEY_IS_LOGIN, true)
-            putInt(KEY_USER_ID, user?.id ?: 0)
-            putString(KEY_USERNAME, user?.username.orEmpty())
-            putString(KEY_NICKNAME, user?.nickname.orEmpty())
-            putInt(KEY_COIN_COUNT, coin?.coinCount ?: 0)
-            putInt(KEY_LEVEL, coin?.level ?: 0)
-            putString(KEY_RANK, coin?.rank.orEmpty())
+            sharedPreferences.edit(commit = true) {
+                putBoolean(KEY_IS_LOGIN, true)
+                putInt(KEY_USER_ID, user?.id ?: 0)
+                putString(KEY_USERNAME, user?.username.orEmpty())
+                putString(KEY_NICKNAME, user?.nickname.orEmpty())
+                putInt(KEY_COIN_COUNT, coin?.coinCount ?: 0)
+                putInt(KEY_LEVEL, coin?.level ?: 0)
+                putString(KEY_RANK, coin?.rank.orEmpty())
+            }
         }
     }
 
-    fun saveLoginUser(user: User){
-        sharedPreferences.edit {
-            putBoolean(KEY_IS_LOGIN, true)
-            putInt(KEY_USER_ID, user.id)
-            putString(KEY_USERNAME, user.username)
-            putString(KEY_NICKNAME, user.nickname.orEmpty())
+    suspend fun saveLoginUser(user: User){
+        withContext(Dispatchers.IO) {
+            sharedPreferences.edit(commit = true) {
+                putBoolean(KEY_IS_LOGIN, true)
+                putInt(KEY_USER_ID, user.id)
+                putString(KEY_USERNAME, user.username)
+                putString(KEY_NICKNAME, user.nickname.orEmpty())
+            }
         }
     }
 
-    fun isLogin(): Boolean {
-        return sharedPreferences.getBoolean(KEY_IS_LOGIN, false)
+    suspend fun isLogin(): Boolean {
+        return withContext(Dispatchers.IO) {
+            sharedPreferences.getBoolean(KEY_IS_LOGIN, false)
+        }
     }
 
-    fun getLocalUserInfo(): UserInfoData? {
-        if (!isLogin()) return null
-
-        val userId = sharedPreferences.getInt(KEY_USER_ID, 0)
-        val username = sharedPreferences.getString(KEY_USERNAME, "").orEmpty()
-        val nickname = sharedPreferences.getString(KEY_NICKNAME, "").orEmpty()
-        val coinCount = sharedPreferences.getInt(KEY_COIN_COUNT, 0)
-        val level = sharedPreferences.getInt(KEY_LEVEL, 0)
-        val rank = sharedPreferences.getString(KEY_RANK, "").orEmpty()
-
-        return UserInfoData(
-            userInfo = User(
-                id = userId,
-                username = username,
-                nickname = nickname
-            ),
-            coinInfo = CoinInfo(
-                coinCount = coinCount,
-                level = level,
-                rank = rank,
-                username = username
+    suspend fun getLocalUserInfo(): UserInfoData? {
+        return withContext(Dispatchers.IO) {
+            val isLogin = sharedPreferences.getBoolean(
+                KEY_IS_LOGIN,
+                false
             )
-        )
+            if (!isLogin) return@withContext null
+
+            val userId = sharedPreferences.getInt(KEY_USER_ID, 0)
+            val username = sharedPreferences.getString(KEY_USERNAME, "").orEmpty()
+            val nickname = sharedPreferences.getString(KEY_NICKNAME, "").orEmpty()
+            val coinCount = sharedPreferences.getInt(KEY_COIN_COUNT, 0)
+            val level = sharedPreferences.getInt(KEY_LEVEL, 0)
+            val rank = sharedPreferences.getString(KEY_RANK, "").orEmpty()
+
+            UserInfoData(
+                userInfo = User(
+                    id = userId,
+                    username = username,
+                    nickname = nickname
+                ),
+                coinInfo = CoinInfo(
+                    coinCount = coinCount,
+                    level = level,
+                    rank = rank,
+                    username = username
+                )
+            )
+        }
     }
 
-    fun clear() {
-        sharedPreferences.edit(){
-            clear()
+    suspend fun clear() {
+        withContext(Dispatchers.IO) {
+            sharedPreferences.edit(commit = true) {
+                clear()
+            }
         }
     }
 }

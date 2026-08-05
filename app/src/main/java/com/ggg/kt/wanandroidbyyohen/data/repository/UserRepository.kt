@@ -74,7 +74,7 @@ class UserRepository {
         }
     }
 
-    fun logout(): UiState<Any> {
+    suspend fun logout(): UiState<Any> {
         return try {
             RetrofitClient.cookieJar.clear()
             UserStore.clear()
@@ -84,11 +84,11 @@ class UserRepository {
         }
     }
 
-    fun getLocalUserInfo(): UserInfoData? {
+    suspend fun getLocalUserInfo(): UserInfoData? {
         return UserStore.getLocalUserInfo()
     }
 
-    fun isLoginLocal(): Boolean {
+    suspend fun isLoginLocal(): Boolean {
         return UserStore.isLogin()
     }
 }

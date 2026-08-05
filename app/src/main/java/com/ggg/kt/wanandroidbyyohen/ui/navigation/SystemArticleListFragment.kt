@@ -12,11 +12,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
-import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
-import com.ggg.kt.wanandroidbyyohen.data.model.Article
+import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentSystemArticleListBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleAdapter
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
@@ -34,7 +32,7 @@ class SystemArticleListFragment : Fragment() {
                 ArticleNavigator.openArticle(requireContext(), article)
             },
             onActionClick = { article ->
-                handleCollectClick(article)
+                viewModel.toggleCollect(article)
             }
         )
     }
@@ -60,6 +58,7 @@ class SystemArticleListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         viewModel.setCid(cid)
 
+        initInsets()
         initToolbar()
         initRecyclerView()
         initRefresh()
@@ -69,6 +68,10 @@ class SystemArticleListFragment : Fragment() {
         if (viewModel.articleState.value !is UiState.Success) {
             viewModel.refresh()
         }
+    }
+
+    private fun initInsets() {
+        binding.contentGroup.applyTopBarInsets()
     }
 
     private fun initToolbar() {
@@ -124,15 +127,6 @@ class SystemArticleListFragment : Fragment() {
                 }
             }
         }
-    }
-
-    private fun handleCollectClick(article: Article) {
-        if (!UserStore.isLogin()) {
-            findNavController().navigate(R.id.login_fragment)
-            return
-        }
-
-        viewModel.toggleCollect(article)
     }
 
     private fun observeCollectState() {

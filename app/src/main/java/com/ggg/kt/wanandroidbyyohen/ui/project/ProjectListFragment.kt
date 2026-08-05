@@ -11,13 +11,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.extension.addLoadMoreListener
-import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
-import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.data.model.ProjectTab
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentProjectListBinding
 import com.ggg.kt.wanandroidbyyohen.ui.common.ArticleNavigator
@@ -35,7 +31,7 @@ class ProjectListFragment : Fragment() {
                 ArticleNavigator.openArticle(requireContext(), article)
             },
             onCollectClick = { article ->
-                handleCollectClick(article)
+                viewModel.toggleCollect(article)
             }
         )
     }
@@ -121,15 +117,6 @@ class ProjectListFragment : Fragment() {
                 }
             }
         }
-    }
-
-    private fun handleCollectClick(article: Article) {
-        if (!UserStore.isLogin()) {
-            findNavController().navigate(R.id.login_fragment)
-            return
-        }
-
-        viewModel.toggleCollect(article)
     }
 
     private fun observeCollectState() {

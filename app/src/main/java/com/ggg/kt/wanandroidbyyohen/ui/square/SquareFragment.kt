@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.ViewPager2
@@ -13,6 +14,7 @@ import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.extension.applyTopBarInsets
 import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
 import com.ggg.kt.wanandroidbyyohen.databinding.FragmentSquareBinding
+import kotlinx.coroutines.launch
 
 class SquareFragment : Fragment(R.layout.fragment_square) {
     private var _binding: FragmentSquareBinding? = null
@@ -96,12 +98,14 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
 
     private fun initClick() {
         binding.btnShareArticle.setOnClickListener {
-            if (!UserStore.isLogin()) {
-                findNavController().navigate(R.id.login_fragment)
-                return@setOnClickListener
-            }
+            viewLifecycleOwner.lifecycleScope.launch {
+                if (!UserStore.isLogin()) {
+                    findNavController().navigate(R.id.login_fragment)
+                    return@launch
+                }
 
-            findNavController().navigate(R.id.share_article_fragment)
+                findNavController().navigate(R.id.share_article_fragment)
+            }
         }
     }
 
