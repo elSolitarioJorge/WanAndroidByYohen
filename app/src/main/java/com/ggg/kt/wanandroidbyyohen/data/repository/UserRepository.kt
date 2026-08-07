@@ -6,6 +6,7 @@ import com.ggg.kt.wanandroidbyyohen.common.network.safeApiCall
 import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
 import com.ggg.kt.wanandroidbyyohen.data.model.User
 import com.ggg.kt.wanandroidbyyohen.data.model.UserInfoData
+import kotlin.coroutines.cancellation.CancellationException
 
 class UserRepository {
     suspend fun login(
@@ -79,6 +80,8 @@ class UserRepository {
             RetrofitClient.cookieJar.clear()
             UserStore.clear()
             UiState.Success(Any())
+        } catch(e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             UiState.Error(e.message ?: "退出登录失败")
         }

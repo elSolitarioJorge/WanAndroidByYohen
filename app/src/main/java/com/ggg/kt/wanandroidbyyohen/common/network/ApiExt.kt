@@ -3,6 +3,7 @@ package com.ggg.kt.wanandroidbyyohen.common.network
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
 import com.ggg.kt.wanandroidbyyohen.data.model.ApiResponse
+import kotlin.coroutines.cancellation.CancellationException
 
 const val LOGIN_EXPIRED_MESSAGE = "您还未登录，请登录后再进行该操作"
 
@@ -34,6 +35,8 @@ suspend fun <T> safeApiCall(
                 )
             }
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         UiState.Error(e.message ?: "网络异常")
     }
@@ -63,6 +66,8 @@ suspend fun safeApiCallWithoutData(
                 )
             }
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         UiState.Error(e.message ?: "网络异常")
     }
