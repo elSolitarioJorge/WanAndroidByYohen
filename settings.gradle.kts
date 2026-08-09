@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "WanAndroidByYohen"
 include(":app")
+include(":baselineprofile")
