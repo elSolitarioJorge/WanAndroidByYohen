@@ -87,7 +87,6 @@ class SquareFragment : Fragment(R.layout.fragment_square) {
     private fun initViewPager() {
         pagerAdapter = SquarePagerAdapter(this, viewModel.tags)
         binding.vpSquarePages.adapter = pagerAdapter
-        binding.vpSquarePages.offscreenPageLimit = viewModel.tags.size
         binding.vpSquarePages.isUserInputEnabled = false
         binding.vpSquarePages.registerOnPageChangeCallback(pageChangeCallback)
         binding.vpSquarePages.setCurrentItem(
