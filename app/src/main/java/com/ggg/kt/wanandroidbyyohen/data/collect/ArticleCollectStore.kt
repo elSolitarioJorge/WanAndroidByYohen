@@ -13,17 +13,29 @@ class ArticleCollectStore {
         _states.asStateFlow()
 
     private val rollbackValues = mutableMapOf<Int, Boolean>()
+    private val locallyModifiedIds = mutableSetOf<Int>()
 
     fun seed(serverStates: Map<Int, Boolean>) {
         synchronized(lock) {
             val updatedStates = _states.value.toMutableMap()
             serverStates.forEach { (articleId, isCollected) ->
                 val currentState = updatedStates[articleId]
-                // 网络请求期间，不允许列表刷新覆盖乐观更新状态
-                if (currentState?.isPending != true) {
-                    updatedStates[articleId] = ArticleCollectState(
-                        isCollected = isCollected
-                    )
+                when {
+                    currentState?.isPending == true -> Unit
+
+                    articleId in locallyModifiedIds -> {
+                        // 服务器已经返回与本地操作一致的结果，
+                        // 说明同步完成，可以解除本地保护
+                        if (currentState?.isCollected == isCollected) {
+                            locallyModifiedIds.remove(articleId)
+
+                            updatedStates[articleId] = ArticleCollectState(isCollected = isCollected)
+                        }
+                    }
+
+                    else -> {
+                        updatedStates[articleId] = ArticleCollectState(isCollected = isCollected)
+                    }
                 }
             }
             _states.value = updatedStates
@@ -44,6 +56,7 @@ class ArticleCollectStore {
             }
 
             rollbackValues[articleId] = currentState.isCollected
+            locallyModifiedIds += articleId
 
             val targetCollected = !currentState.isCollected
 
@@ -70,6 +83,7 @@ class ArticleCollectStore {
             }
 
             rollbackValues[articleId] = currentState.isCollected
+            locallyModifiedIds += articleId
 
             _states.value += (articleId to ArticleCollectState(
                 isCollected = targetCollected,
@@ -91,6 +105,7 @@ class ArticleCollectStore {
 
     fun rollback(articleId: Int) {
         synchronized(lock) {
+            locallyModifiedIds.remove(articleId)
             val previousCollected =
                 rollbackValues.remove(articleId) ?: return
 
@@ -101,9 +116,45 @@ class ArticleCollectStore {
         }
     }
 
+    fun resetForSignedOutUser() {
+        synchronized(lock) {
+            rollbackValues.clear()
+            locallyModifiedIds.clear()
+
+            _states.value = _states.value.mapValues {
+                ArticleCollectState(
+                    isCollected = false,
+                    isPending = false
+                )
+            }
+        }
+    }
+
+    fun resetForAuthenticatedUser(
+        collectedArticleIds: Collection<Int>
+    ) {
+        synchronized(lock) {
+            rollbackValues.clear()
+            locallyModifiedIds.clear()
+
+            val collectedIdSet = collectedArticleIds.toSet()
+
+            val allArticleIds = _states.value.keys + collectedIdSet
+
+            _states.value =
+                allArticleIds.associateWith { articleId ->
+                    ArticleCollectState(
+                        isCollected = articleId in collectedIdSet,
+                        isPending = false
+                    )
+                }
+        }
+    }
+
     fun clear() {
         synchronized(lock) {
             rollbackValues.clear()
+            locallyModifiedIds.clear()
             _states.value = emptyMap()
         }
     }

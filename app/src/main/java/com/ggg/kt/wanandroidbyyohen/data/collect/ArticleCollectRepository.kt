@@ -117,6 +117,16 @@ class ArticleCollectRepository(
         }
     }
 
+    fun resetForSignedOutUser() {
+        store.resetForSignedOutUser()
+    }
+
+    fun resetForAuthenticatedUser(
+        collectedArticleIds: Collection<Int>
+    ) {
+        store.resetForAuthenticatedUser(collectedArticleIds)
+    }
+
     fun clear() {
         store.clear()
     }
