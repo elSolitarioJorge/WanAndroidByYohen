@@ -57,7 +57,8 @@ class CollectArticleFragment : Fragment() {
         initLoadMore()
         initClick()
         observeData()
-        observeUncollect()
+        observeCollectStates()
+        observeUncollectMessages()
 
         if (viewModel.collectArticleState.value !is UiState.Success) {
             viewModel.refresh()
@@ -117,7 +118,7 @@ class CollectArticleFragment : Fragment() {
 
                             articleAdapter.submitList(data.articles)
 
-                            if (data.isRefresh && data.articles.isEmpty()) {
+                            if (data.articles.isEmpty()) {
                                 binding.stateLayout.showEmpty(
                                     title = "这里空空如也",
                                     desc = "你还没有收藏过任何内容\n去发现更多精彩文章吧",
@@ -138,31 +139,29 @@ class CollectArticleFragment : Fragment() {
         }
     }
 
-    private fun observeUncollect() {
+    private fun observeCollectStates() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uncollectState.collect { state ->
-                    when (state) {
-                        null -> Unit
-                        is UiState.Loading -> Unit
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                viewModel.collectStates.collect { states ->
+                    articleAdapter.updateCollectStates(states)
+                }
+            }
+        }
+    }
 
-                        is UiState.Success -> {
-                            articleAdapter.removeArticle(state.data.id)
-                            Toast.makeText(
-                                requireContext(),
-                                "已取消收藏",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-
-                        is UiState.Error -> {
-                            Toast.makeText(
-                                requireContext(),
-                                state.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
+    private fun observeUncollectMessages() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                viewModel.uncollectMessages.collect { message ->
+                    Toast.makeText(
+                        requireContext(),
+                        message,
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }

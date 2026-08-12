@@ -37,10 +37,11 @@ class ArticleAdapter(
         val previousStates = collectStates
         collectStates = newStates
         currentList.forEachIndexed { index, article ->
-            val previousState = previousStates[article.id]
+            val stateKey = collectStateKey(article)
+            val previousState = previousStates[stateKey]
                 ?: ArticleCollectState(isCollected = article.collect)
 
-            val newState = newStates[article.id]
+            val newState = newStates[stateKey]
                 ?: ArticleCollectState(isCollected = article.collect)
 
             if (previousState != newState) {
@@ -49,10 +50,20 @@ class ArticleAdapter(
         }
     }
 
+    private fun collectStateKey(
+        article: Article
+    ): Int {
+        return if (actionMode == ArticleActionMode.COLLECTED) {
+            article.originId.takeIf { it > 0 } ?: article.id
+        } else {
+            article.id
+        }
+    }
+
     private fun collectStateOf(
         article: Article
     ): ArticleCollectState {
-        return collectStates[article.id]
+        return collectStates[collectStateKey(article)]
             ?: ArticleCollectState(isCollected = article.collect)
     }
 
@@ -152,7 +163,13 @@ class ArticleAdapter(
                     binding.btnCollect.isEnabled = !collectState.isPending
                     binding.btnCollect.alpha = if (collectState.isPending) 0.5f else 1f
                 }
-                ArticleActionMode.COLLECTED,
+
+                ArticleActionMode.COLLECTED -> {
+                    bindDeleteAction()
+                    binding.btnCollect.isEnabled = !collectState.isPending
+                    binding.btnCollect.alpha = if (collectState.isPending) 0.5f else 1f
+                }
+
                 ArticleActionMode.SHARED -> {
                     bindDeleteAction()
                     binding.btnCollect.isEnabled = true
