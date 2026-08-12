@@ -26,11 +26,6 @@ class ArticleAdapter(
         SHARED
     }
 
-    fun addList(newList: List<Article>) {
-        if (newList.isEmpty()) return
-        submitList(currentList + newList)
-    }
-
     fun updateCollectStates(
         newStates: Map<Int, ArticleCollectState>
     ) {
@@ -65,17 +60,6 @@ class ArticleAdapter(
     ): ArticleCollectState {
         return collectStates[collectStateKey(article)]
             ?: ArticleCollectState(isCollected = article.collect)
-    }
-
-    fun updateCollectState(articleId: Int, collect: Boolean) {
-        val newList = currentList.map { article ->
-            if (article.id == articleId) {
-                article.copy(collect = collect)
-            } else {
-                article
-            }
-        }
-        submitList(newList)
     }
 
     fun removeArticle(articleId: Int) {

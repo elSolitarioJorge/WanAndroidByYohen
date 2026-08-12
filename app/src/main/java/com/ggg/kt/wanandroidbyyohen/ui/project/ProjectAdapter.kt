@@ -21,11 +21,6 @@ class ProjectAdapter(
 
     private var collectStates: Map<Int, ArticleCollectState> = emptyMap()
 
-    fun addList(newList: List<Article>) {
-        if (newList.isEmpty()) return
-        submitList(currentList + newList)
-    }
-
     fun updateCollectStates(
         newStates: Map<Int, ArticleCollectState>
     ) {
