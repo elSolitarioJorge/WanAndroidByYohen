@@ -10,6 +10,7 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.ggg.kt.wanandroidbyyohen.R
+import com.ggg.kt.wanandroidbyyohen.data.collect.ArticleCollectState
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.ItemProjectBinding
 
@@ -18,20 +19,32 @@ class ProjectAdapter(
     private val onCollectClick: ((Article) -> Unit)? = null
 ) : ListAdapter<Article, ProjectAdapter.ProjectViewHolder>(ProjectDiffCallback()) {
 
-    fun addList(newList: List<Article>) {
-        if (newList.isEmpty()) return
-        submitList(currentList + newList)
-    }
+    private var collectStates: Map<Int, ArticleCollectState> = emptyMap()
 
-    fun updateCollectState(articleId: Int, collect: Boolean) {
-        val newList = currentList.map { article ->
-            if (article.id == articleId) {
-                article.copy(collect = collect)
-            } else {
-                article
+    fun updateCollectStates(
+        newStates: Map<Int, ArticleCollectState>
+    ) {
+        val previousStates = collectStates
+        collectStates = newStates
+
+        currentList.forEachIndexed { index, article ->
+            val previousState = previousStates[article.id]
+                ?: ArticleCollectState(isCollected = article.collect)
+
+            val newState = newStates[article.id]
+                ?: ArticleCollectState(isCollected = article.collect)
+
+            if (previousState != newState) {
+                notifyItemChanged(index, PAYLOAD_COLLECT)
             }
         }
-        submitList(newList)
+    }
+
+    private fun collectStateOf(
+        article: Article
+    ): ArticleCollectState {
+        return collectStates[article.id]
+            ?: ArticleCollectState(isCollected = article.collect)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProjectViewHolder {
@@ -48,15 +61,36 @@ class ProjectAdapter(
         )
     }
 
-    override fun onBindViewHolder(holder: ProjectViewHolder, position: Int) {
-        holder.bind(getItem(position))
+    override fun onBindViewHolder(
+        holder: ProjectViewHolder,
+        position: Int
+    ) {
+        val article = getItem(position)
+
+        holder.bind(
+            article = article,
+            collectState = collectStateOf(article)
+        )
     }
 
-    override fun onBindViewHolder(holder: ProjectViewHolder, position: Int, payloads: List<Any?>) {
+    override fun onBindViewHolder(
+        holder: ProjectViewHolder,
+        position: Int,
+        payloads: List<Any?>
+    ) {
+        val article = getItem(position)
+        val collectState = collectStateOf(article)
+
         if (payloads.contains(PAYLOAD_COLLECT)) {
-            holder.bindCollect(getItem(position))
+            holder.bindCollect(
+                article = article,
+                collectState = collectState
+            )
         } else {
-            holder.bind(getItem(position))
+            holder.bind(
+                article = article,
+                collectState = collectState
+            )
         }
     }
 
@@ -66,7 +100,10 @@ class ProjectAdapter(
         private val onCollectClick: ((Article) -> Unit)?
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(article: Article) {
+        fun bind(
+            article: Article,
+            collectState: ArticleCollectState
+        ) {
             binding.tvAuthor.text = article.displayAuthor()
             binding.tvTitle.text = article.title
             binding.tvDesc.text = article.desc.orEmpty()
@@ -78,20 +115,42 @@ class ProjectAdapter(
                 error(android.R.drawable.ic_menu_report_image)
             }
 
-            bindCollect(article)
+            bindCollect(
+                article = article,
+                collectState = collectState
+            )
 
             binding.root.setOnClickListener {
                 onItemClick(article)
             }
         }
 
-        fun bindCollect(article: Article) {
+        fun bindCollect(
+            article: Article,
+            collectState: ArticleCollectState
+        ) {
             binding.ivCollect.setImageResource(
-                if (article.collect) R.drawable.ic_heart_filled
-                else R.drawable.ic_heart_line
+                if (collectState.isCollected) {
+                    R.drawable.ic_heart_filled
+                } else {
+                    R.drawable.ic_heart_line
+                }
             )
+
+            binding.ivCollect.isEnabled = !collectState.isPending
+
+            binding.ivCollect.alpha =
+                if (collectState.isPending) 0.5f else 1f
+
+            binding.ivCollect.contentDescription =
+                if (collectState.isCollected) {
+                    "取消收藏"
+                } else {
+                    "收藏"
+                }
+
             binding.ivCollect.setOnClickListener {
-                onCollectClick?.invoke(article)
+                onCollectClick?.invoke(article.copy(collect = collectState.isCollected))
             }
         }
     }

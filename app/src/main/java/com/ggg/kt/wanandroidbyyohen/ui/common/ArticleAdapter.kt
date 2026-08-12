@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.ggg.kt.wanandroidbyyohen.R
 import com.ggg.kt.wanandroidbyyohen.common.extension.toHighlightText
+import com.ggg.kt.wanandroidbyyohen.data.collect.ArticleCollectState
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.databinding.ItemArticleBinding
 
@@ -18,26 +19,47 @@ class ArticleAdapter(
     private val actionMode: ArticleActionMode = ArticleActionMode.COLLECT
 ) : ListAdapter<Article, ArticleAdapter.ArticleViewHolder>(ArticleDiffCallback()) {
 
+    private var collectStates: Map<Int, ArticleCollectState> = emptyMap()
     enum class ArticleActionMode {
         COLLECT,
         COLLECTED,
         SHARED
     }
 
-    fun addList(newList: List<Article>) {
-        if (newList.isEmpty()) return
-        submitList(currentList + newList)
-    }
+    fun updateCollectStates(
+        newStates: Map<Int, ArticleCollectState>
+    ) {
+        val previousStates = collectStates
+        collectStates = newStates
+        currentList.forEachIndexed { index, article ->
+            val stateKey = collectStateKey(article)
+            val previousState = previousStates[stateKey]
+                ?: ArticleCollectState(isCollected = article.collect)
 
-    fun updateCollectState(articleId: Int, collect: Boolean) {
-        val newList = currentList.map { article ->
-            if (article.id == articleId) {
-                article.copy(collect = collect)
-            } else {
-                article
+            val newState = newStates[stateKey]
+                ?: ArticleCollectState(isCollected = article.collect)
+
+            if (previousState != newState) {
+                notifyItemChanged(index, PAYLOAD_COLLECT)
             }
         }
-        submitList(newList)
+    }
+
+    private fun collectStateKey(
+        article: Article
+    ): Int {
+        return if (actionMode == ArticleActionMode.COLLECTED) {
+            article.originId.takeIf { it > 0 } ?: article.id
+        } else {
+            article.id
+        }
+    }
+
+    private fun collectStateOf(
+        article: Article
+    ): ArticleCollectState {
+        return collectStates[collectStateKey(article)]
+            ?: ArticleCollectState(isCollected = article.collect)
     }
 
     fun removeArticle(articleId: Int) {
@@ -60,14 +82,26 @@ class ArticleAdapter(
     }
 
     override fun onBindViewHolder(holder: ArticleViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        val article = getItem(position)
+        holder.bind(
+            article = article,
+            collectState = collectStateOf(article)
+        )
     }
 
     override fun onBindViewHolder(holder: ArticleViewHolder, position: Int, payloads: List<Any?>) {
+        val article = getItem(position)
+        val collectState = collectStateOf(article)
         if (payloads.contains(PAYLOAD_COLLECT)) {
-            holder.bindAction(getItem(position))
+            holder.bindAction(
+                article = article,
+                collectState = collectState
+            )
         } else {
-            holder.bind(getItem(position))
+            holder.bind(
+                article = article,
+                collectState = collectState
+            )
         }
     }
 
@@ -78,7 +112,10 @@ class ArticleAdapter(
         private val actionMode: ArticleActionMode
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(article: Article) {
+        fun bind(
+            article: Article,
+            collectState: ArticleCollectState
+        ) {
             binding.tvAuthor.text = article.displayAuthor()
             binding.tvTagTop.visibility = if (article.isTop) View.VISIBLE else View.GONE
             binding.tvTagCategory.text = if (!article.chapterName.isNullOrBlank()) article.chapterName else "未知"
@@ -91,21 +128,48 @@ class ArticleAdapter(
             binding.tvTitle.text = article.title.toHighlightText()
             binding.tvTime.text = buildTimeText(article)
 
-            bindAction(article)
+            bindAction(
+                article = article,
+                collectState = collectState
+            )
             binding.root.setOnClickListener {
                 onItemClick(article)
             }
         }
 
-        fun bindAction(article: Article) {
+        fun bindAction(
+            article: Article,
+            collectState: ArticleCollectState
+        ) {
             when (actionMode) {
-                ArticleActionMode.COLLECT -> bindCollectAction(article)
-                ArticleActionMode.COLLECTED,
-                ArticleActionMode.SHARED -> bindDeleteAction()
+                ArticleActionMode.COLLECT -> {
+                    bindCollectAction(collectState.isCollected)
+                    binding.btnCollect.isEnabled = !collectState.isPending
+                    binding.btnCollect.alpha = if (collectState.isPending) 0.5f else 1f
+                }
+
+                ArticleActionMode.COLLECTED -> {
+                    bindDeleteAction()
+                    binding.btnCollect.isEnabled = !collectState.isPending
+                    binding.btnCollect.alpha = if (collectState.isPending) 0.5f else 1f
+                }
+
+                ArticleActionMode.SHARED -> {
+                    bindDeleteAction()
+                    binding.btnCollect.isEnabled = true
+                    binding.btnCollect.alpha = 1f
+                }
             }
 
             binding.btnCollect.setOnClickListener {
-                onActionClick.invoke(article)
+                val actionArticle =
+                    if (actionMode == ArticleActionMode.COLLECT) {
+                        article.copy(collect = collectState.isCollected)
+                    } else {
+                        article
+                    }
+
+                onActionClick.invoke(actionArticle)
             }
         }
 
@@ -118,13 +182,13 @@ class ArticleAdapter(
             }
         }
 
-        private fun bindCollectAction(article: Article) {
+        private fun bindCollectAction(isCollected: Boolean) {
             binding.btnCollect.setImageResource(
-                if (article.collect) R.drawable.ic_heart_filled
+                if (isCollected) R.drawable.ic_heart_filled
                 else R.drawable.ic_heart_line
             )
             binding.btnCollect.setBackgroundResource(resolveBorderlessSelectableBackground())
-            binding.btnCollect.contentDescription = if (article.collect) "取消收藏" else "收藏"
+            binding.btnCollect.contentDescription = if (isCollected) "取消收藏" else "收藏"
         }
 
         private fun bindDeleteAction() {

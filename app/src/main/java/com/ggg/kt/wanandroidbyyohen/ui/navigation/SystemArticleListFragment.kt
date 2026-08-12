@@ -64,7 +64,8 @@ class SystemArticleListFragment : Fragment() {
         initRefresh()
         initLoadMore()
         observeData()
-        observeCollectState()
+        observeCollectStates()
+        observeCollectErrors()
         if (viewModel.articleState.value !is UiState.Success) {
             viewModel.refresh()
         }
@@ -129,28 +130,25 @@ class SystemArticleListFragment : Fragment() {
         }
     }
 
-    private fun observeCollectState() {
+    private fun observeCollectStates() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.collectState.collect { state ->
-                    when (state) {
-                        null -> Unit
-                        is UiState.Loading -> Unit
+                viewModel.collectStates.collect { states ->
+                    articleAdapter.updateCollectStates(states)
+                }
+            }
+        }
+    }
 
-                        is UiState.Success -> {
-                            val articleId = state.data.first
-                            val collect = state.data.second
-                            articleAdapter.updateCollectState(articleId, collect)
-                        }
-
-                        is UiState.Error -> {
-                            Toast.makeText(
-                                requireContext(),
-                                state.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
+    private fun observeCollectErrors() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.collectErrors.collect { message ->
+                    Toast.makeText(
+                        requireContext(),
+                        message,
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }

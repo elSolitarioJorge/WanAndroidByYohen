@@ -3,6 +3,7 @@ package com.ggg.kt.wanandroidbyyohen.data.repository
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
 import com.ggg.kt.wanandroidbyyohen.common.network.RetrofitClient
 import com.ggg.kt.wanandroidbyyohen.common.network.safeApiCall
+import com.ggg.kt.wanandroidbyyohen.data.collect.ArticleCollectProvider
 import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
 import com.ggg.kt.wanandroidbyyohen.data.model.User
 import com.ggg.kt.wanandroidbyyohen.data.model.UserInfoData
@@ -23,6 +24,9 @@ class UserRepository {
             is UiState.Success -> {
                 val user = result.data
                 UserStore.saveLoginUser(user)
+
+                ArticleCollectProvider.repository
+                    .resetForAuthenticatedUser(user.collectIds.orEmpty())
                 UiState.Success(user)
             }
 
@@ -47,6 +51,9 @@ class UserRepository {
             is UiState.Success -> {
                 val user = result.data
                 UserStore.saveLoginUser(user)
+
+                ArticleCollectProvider.repository
+                    .resetForAuthenticatedUser(user.collectIds.orEmpty())
                 UiState.Success(user)
             }
 
@@ -84,6 +91,8 @@ class UserRepository {
             throw e
         } catch (e: Exception) {
             UiState.Error(e.message ?: "退出登录失败")
+        } finally {
+            ArticleCollectProvider.repository.resetForSignedOutUser()
         }
     }
 

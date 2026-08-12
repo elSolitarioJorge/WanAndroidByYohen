@@ -61,7 +61,8 @@ class SquareArticleListFragment : Fragment() {
         initRefresh()
         initLoadMore()
         observeData()
-        observeCollectState()
+        observeCollectStates()
+        observeCollectErrors()
     }
 
     override fun onResume() {
@@ -117,29 +118,25 @@ class SquareArticleListFragment : Fragment() {
         }
     }
 
-    private fun observeCollectState() {
+    private fun observeCollectStates() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.collectState.collect { state ->
-                    when (state) {
-                        null -> Unit
+                viewModel.collectStates.collect { states ->
+                    articleAdapter.updateCollectStates(states)
+                }
+            }
+        }
+    }
 
-                        is UiState.Loading -> Unit
-
-                        is UiState.Success -> {
-                            val articleId = state.data.first
-                            val collect = state.data.second
-                            articleAdapter.updateCollectState(articleId, collect)
-                        }
-
-                        is UiState.Error -> {
-                            Toast.makeText(
-                                requireContext(),
-                                state.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
+    private fun observeCollectErrors() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.collectErrors.collect { message ->
+                    Toast.makeText(
+                        requireContext(),
+                        message,
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }

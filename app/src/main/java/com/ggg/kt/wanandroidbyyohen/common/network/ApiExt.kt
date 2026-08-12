@@ -1,6 +1,7 @@
 package com.ggg.kt.wanandroidbyyohen.common.network
 
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
+import com.ggg.kt.wanandroidbyyohen.data.collect.ArticleCollectProvider
 import com.ggg.kt.wanandroidbyyohen.data.local.UserStore
 import com.ggg.kt.wanandroidbyyohen.data.model.ApiResponse
 import kotlin.coroutines.cancellation.CancellationException
@@ -26,6 +27,7 @@ suspend fun <T> safeApiCall(
             -1001 -> {
                 RetrofitClient.cookieJar.clear()
                 UserStore.clear()
+                ArticleCollectProvider.repository.resetForSignedOutUser()
                 UiState.Error(LOGIN_EXPIRED_MESSAGE)
             }
 
@@ -57,6 +59,7 @@ suspend fun safeApiCallWithoutData(
             -1001 -> {
                 RetrofitClient.cookieJar.clear()
                 UserStore.clear()
+                ArticleCollectProvider.repository.resetForSignedOutUser()
                 UiState.Error(LOGIN_EXPIRED_MESSAGE)
             }
 
