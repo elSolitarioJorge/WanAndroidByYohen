@@ -3,20 +3,22 @@ package com.ggg.kt.wanandroidbyyohen.ui.search
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
+import com.ggg.kt.wanandroidbyyohen.data.collect.ArticleCollectProvider
+import com.ggg.kt.wanandroidbyyohen.data.collect.ArticleCollectState
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.data.model.HotKey
 import com.ggg.kt.wanandroidbyyohen.data.model.SearchArticleData
-import com.ggg.kt.wanandroidbyyohen.data.repository.CollectRepository
 import com.ggg.kt.wanandroidbyyohen.data.repository.SearchRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class SearchViewModel : ViewModel() {
 
     private val searchRepository = SearchRepository()
-    private val collectRepository = CollectRepository()
-
     private val _hotKeyState =
         MutableStateFlow<UiState<List<HotKey>>>(UiState.Loading)
     val hotKeyState: StateFlow<UiState<List<HotKey>>> = _hotKeyState
@@ -24,10 +26,13 @@ class SearchViewModel : ViewModel() {
     private val _searchState =
         MutableStateFlow<UiState<SearchArticleData>?>(null)
     val searchState: StateFlow<UiState<SearchArticleData>?> = _searchState
+    private val articleCollectRepository = ArticleCollectProvider.repository
 
-    private val _collectState =
-        MutableStateFlow<UiState<Pair<Int, Boolean>>?>(null)
-    val collectState: StateFlow<UiState<Pair<Int, Boolean>>?> = _collectState
+    val collectStates: StateFlow<Map<Int, ArticleCollectState>> = articleCollectRepository.states
+
+    private val _collectErrors = MutableSharedFlow<String>(extraBufferCapacity = 1)
+
+    val collectErrors: SharedFlow<String> = _collectErrors.asSharedFlow()
 
     private var currentKeyword = ""
     private var currentPage = 0
@@ -65,6 +70,9 @@ class SearchViewModel : ViewModel() {
             )
 
             if (result is UiState.Success) {
+                articleCollectRepository.seed(
+                    result.data.articles
+                )
                 currentData = result.data
                 hasMore = result.data.hasMore
                 currentPage++
@@ -94,6 +102,9 @@ class SearchViewModel : ViewModel() {
             )
 
             if (result is UiState.Success) {
+                articleCollectRepository.seed(
+                    result.data.articles
+                )
                 val oldData = currentData
                 val mergedData = oldData?.copy(
                     articles = oldData.articles + result.data.articles,
@@ -114,28 +125,17 @@ class SearchViewModel : ViewModel() {
 
     fun toggleCollect(article: Article) {
         viewModelScope.launch {
-            _collectState.value = UiState.Loading
-
-            val result = if (article.collect) {
-                collectRepository.uncollectArticle(article.id)
-            } else {
-                collectRepository.collectArticle(article.id)
-            }
-
-            _collectState.value = when (result) {
-                is UiState.Success -> {
-                    val collect = !article.collect
-                    val updatedData = currentData?.copy(
-                        articles = currentData?.articles.orEmpty().map {
-                            if (it.id == article.id) it.copy(collect = collect) else it
-                        }
-                    )
-                    currentData = updatedData
-                    updatedData?.let { _searchState.value = UiState.Success(it) }
-                    UiState.Success(article.id to collect)
+            when (
+                val result = articleCollectRepository.toggle(
+                    articleId = article.id,
+                    fallbackCollected = article.collect
+                )
+            ) {
+                is UiState.Error -> {
+                    _collectErrors.emit(result.message)
                 }
-                is UiState.Error -> UiState.Error(result.message)
-                is UiState.Loading -> UiState.Loading
+
+                else -> Unit
             }
         }
     }
