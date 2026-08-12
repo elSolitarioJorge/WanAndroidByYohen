@@ -3,26 +3,33 @@ package com.ggg.kt.wanandroidbyyohen.ui.square
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
+import com.ggg.kt.wanandroidbyyohen.data.collect.ArticleCollectProvider
+import com.ggg.kt.wanandroidbyyohen.data.collect.ArticleCollectState
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.data.model.SquareData
 import com.ggg.kt.wanandroidbyyohen.data.model.SquareTag
-import com.ggg.kt.wanandroidbyyohen.data.repository.CollectRepository
 import com.ggg.kt.wanandroidbyyohen.data.repository.SearchRepository
 import com.ggg.kt.wanandroidbyyohen.data.repository.SquareRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class SquareArticleListViewModel : ViewModel() {
     private val squareRepository = SquareRepository()
-    private val collectRepository = CollectRepository()
     private val searchRepository = SearchRepository()
 
     private val _squareState = MutableStateFlow<UiState<SquareData>>(UiState.Loading)
     val squareState: StateFlow<UiState<SquareData>> = _squareState
+    private val articleCollectRepository = ArticleCollectProvider.repository
 
-    private val _collectState = MutableStateFlow<UiState<Pair<Int, Boolean>>?>(null)
-    val collectState: StateFlow<UiState<Pair<Int, Boolean>>?> = _collectState
+    val collectStates: StateFlow<Map<Int, ArticleCollectState>> = articleCollectRepository.states
+
+    private val _collectErrors = MutableSharedFlow<String>(extraBufferCapacity = 1)
+
+    val collectErrors: SharedFlow<String> = _collectErrors.asSharedFlow()
 
     private var tag: SquareTag? = null
     private var currentData: SquareData? = null
@@ -63,6 +70,7 @@ class SquareArticleListViewModel : ViewModel() {
                 isRefresh = true
             )
             if (result is UiState.Success) {
+                articleCollectRepository.seed(result.data.articles)
                 currentData = result.data
                 currentPage = 1
                 hasMore = result.data.hasMore
@@ -85,6 +93,7 @@ class SquareArticleListViewModel : ViewModel() {
             )
 
             if (result is UiState.Success) {
+                articleCollectRepository.seed(result.data.articles)
                 val mergedData = oldData.copy(
                     articles = oldData.articles + result.data.articles,
                     isRefresh = false,
@@ -103,23 +112,17 @@ class SquareArticleListViewModel : ViewModel() {
 
     fun toggleCollect(article: Article) {
         viewModelScope.launch {
-            _collectState.value = UiState.Loading
-
-            val result = if (article.collect) {
-                collectRepository.uncollectArticle(article.id)
-            } else {
-                collectRepository.collectArticle(article.id)
-            }
-
-            _collectState.value = when (result) {
-                is UiState.Success -> {
-                    updateCurrentCollectState(article.id, !article.collect)
-                    UiState.Success(article.id to !article.collect)
+            when (
+                val result = articleCollectRepository.toggle(
+                    articleId = article.id,
+                    fallbackCollected = article.collect
+                )
+            ) {
+                is UiState.Error -> {
+                    _collectErrors.emit(result.message)
                 }
 
-                is UiState.Error -> UiState.Error(result.message)
-
-                is UiState.Loading -> UiState.Loading
+                else -> Unit
             }
         }
     }
@@ -149,18 +152,5 @@ class SquareArticleListViewModel : ViewModel() {
                 is UiState.Loading -> UiState.Loading
             }
         }
-    }
-
-    private fun updateCurrentCollectState(articleId: Int, collect: Boolean) {
-        val data = currentData ?: return
-        currentData = data.copy(
-            articles = data.articles.map { article ->
-                if (article.id == articleId) {
-                    article.copy(collect = collect)
-                } else {
-                    article
-                }
-            }
-        )
     }
 }
