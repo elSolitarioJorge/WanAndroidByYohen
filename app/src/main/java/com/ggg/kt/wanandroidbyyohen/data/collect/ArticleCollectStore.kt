@@ -56,6 +56,29 @@ class ArticleCollectStore {
         }
     }
 
+    fun beginSet(
+        articleId: Int,
+        fallbackCollected: Boolean,
+        targetCollected: Boolean
+    ): Boolean {
+        synchronized(lock) {
+            val currentState = _states.value[articleId]
+                ?: ArticleCollectState(isCollected = fallbackCollected)
+
+            if (currentState.isPending) {
+                return false
+            }
+
+            rollbackValues[articleId] = currentState.isCollected
+
+            _states.value += (articleId to ArticleCollectState(
+                isCollected = targetCollected,
+                isPending = true
+            ))
+            return true
+        }
+    }
+
     fun confirm(articleId: Int) {
         synchronized(lock) {
             val currentState = _states.value[articleId] ?: return

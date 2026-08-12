@@ -116,10 +116,83 @@ class ArticleCollectRepositoryTest {
         assertFalse(store.states.value.getValue(1).isPending)
     }
 
+    @Test
+    fun uncollectFromMineUpdatesStateUsingOriginId() = runTest {
+        val store = ArticleCollectStore()
+        val remote = FakeCollectRemoteDataSource()
+        val repository =
+            ArticleCollectRepository(store, remote)
+
+        val request = async {
+            repository.uncollectFromMine(
+                collectionId = 900,
+                originId = 100
+            )
+        }
+
+        runCurrent()
+
+        val pendingState =
+            store.states.value.getValue(100)
+
+        assertFalse(pendingState.isCollected)
+        assertTrue(pendingState.isPending)
+
+        // Store 使用原文章 ID，不使用收藏记录 ID
+        assertNull(store.states.value[900])
+
+        assertEquals(
+            listOf(900 to 100),
+            remote.mineRequests
+        )
+
+        remote.complete(UiState.Success(Any()))
+
+        assertEquals(
+            UiState.Success(false),
+            request.await()
+        )
+
+        val finalState =
+            store.states.value.getValue(100)
+
+        assertFalse(finalState.isCollected)
+        assertFalse(finalState.isPending)
+    }
+
+    @Test
+    fun failedUncollectFromMineRestoresCollectedState() = runTest {
+        val store = ArticleCollectStore()
+        val remote = FakeCollectRemoteDataSource()
+        val repository =
+            ArticleCollectRepository(store, remote)
+
+        val request = async {
+            repository.uncollectFromMine(
+                collectionId = 900,
+                originId = 100
+            )
+        }
+
+        runCurrent()
+        remote.complete(UiState.Error("取消失败"))
+
+        assertEquals(
+            UiState.Error("取消失败"),
+            request.await()
+        )
+
+        val state = store.states.value.getValue(100)
+
+        assertTrue(state.isCollected)
+        assertFalse(state.isPending)
+    }
+
     private class FakeCollectRemoteDataSource :
         CollectRemoteDataSource {
 
         val requests = mutableListOf<Pair<Int, Boolean>>()
+        val mineRequests = mutableListOf<Pair<Int, Int>>()
 
         private val response =
             CompletableDeferred<UiState<Any>>()
@@ -129,6 +202,14 @@ class ArticleCollectRepositoryTest {
             isCollected: Boolean
         ): UiState<Any> {
             requests += articleId to isCollected
+            return response.await()
+        }
+
+        override suspend fun uncollectFromMine(
+            collectionId: Int,
+            originId: Int
+        ): UiState<Any> {
+            mineRequests += collectionId to originId
             return response.await()
         }
 

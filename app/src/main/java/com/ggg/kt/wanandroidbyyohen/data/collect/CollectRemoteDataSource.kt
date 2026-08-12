@@ -7,4 +7,9 @@ interface CollectRemoteDataSource {
         articleId: Int,
         isCollected: Boolean
     ): UiState<Any>
+
+    suspend fun uncollectFromMine(
+        collectionId: Int,
+        originId: Int
+    ): UiState<Any>
 }

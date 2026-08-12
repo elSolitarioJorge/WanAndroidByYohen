@@ -114,4 +114,23 @@ class ArticleCollectStoreTest {
 
         assertTrue(store.states.value.isEmpty())
     }
+
+    @Test
+    fun beginSetPublishesExplicitTargetState() {
+        val store = ArticleCollectStore()
+
+        val accepted = store.beginSet(
+            articleId = 1,
+            fallbackCollected = true,
+            targetCollected = false
+        )
+
+        assertTrue(accepted)
+        assertFalse(
+            store.states.value.getValue(1).isCollected
+        )
+        assertTrue(
+            store.states.value.getValue(1).isPending
+        )
+    }
 }

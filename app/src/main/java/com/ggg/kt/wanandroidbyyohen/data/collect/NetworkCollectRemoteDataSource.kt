@@ -24,4 +24,18 @@ class NetworkCollectRemoteDataSource : CollectRemoteDataSource {
             }
         }
     }
+
+    override suspend fun uncollectFromMine(
+        collectionId: Int,
+        originId: Int
+    ): UiState<Any> {
+        return safeApiCallWithoutData(
+            defaultErrorMessage = "取消收藏失败"
+        ) {
+            RetrofitClient.api.uncollectArticleFromMine(
+                id = collectionId,
+                originId = originId
+            )
+        }
+    }
 }

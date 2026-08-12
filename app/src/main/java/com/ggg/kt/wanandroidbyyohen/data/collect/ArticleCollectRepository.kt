@@ -20,6 +20,20 @@ class ArticleCollectRepository(
         )
     }
 
+    fun seedCollectedArticles(
+        articles: List<Article>
+    ) {
+        store.seed(
+            articles.associate { article ->
+                val sourceArticleId =
+                    article.originId.takeIf { it > 0 }
+                        ?: article.id
+
+                sourceArticleId to true
+            }
+        )
+    }
+
     suspend fun toggle(
         articleId: Int,
         fallbackCollected: Boolean
@@ -29,13 +43,53 @@ class ArticleCollectRepository(
             fallbackCollected = fallbackCollected
         ) ?: return null
 
+        return executeUpdate(
+            articleId = articleId,
+            targetCollected = targetCollected
+        ) {
+            remoteDataSource.setCollected(
+                articleId = articleId,
+                isCollected = targetCollected
+            )
+        }
+    }
+
+    suspend fun uncollectFromMine(
+        collectionId: Int,
+        originId: Int
+    ): UiState<Boolean>? {
+        val sourceArticleId =
+            originId.takeIf { it > 0 }
+                ?: collectionId
+
+        val accepted = store.beginSet(
+            articleId = sourceArticleId,
+            fallbackCollected = true,
+            targetCollected = false
+        )
+
+        if (!accepted) {
+            return null
+        }
+
+        return executeUpdate(
+            articleId = sourceArticleId,
+            targetCollected = false
+        ) {
+            remoteDataSource.uncollectFromMine(
+                collectionId = collectionId,
+                originId = originId
+            )
+        }
+    }
+
+    private suspend fun executeUpdate(
+        articleId: Int,
+        targetCollected: Boolean,
+        request: suspend () -> UiState<Any>
+    ): UiState<Boolean> {
         return try {
-            when (
-                val result = remoteDataSource.setCollected(
-                    articleId = articleId,
-                    isCollected = targetCollected
-                )
-            ) {
+            when (val result = request()) {
                 is UiState.Success -> {
                     store.confirm(articleId)
                     UiState.Success(targetCollected)
@@ -51,12 +105,15 @@ class ArticleCollectRepository(
                     UiState.Error("收藏请求未完成")
                 }
             }
-        } catch (e: CancellationException) {
+        } catch (exception: CancellationException) {
             store.rollback(articleId)
-            throw e
-        } catch (e: Exception) {
+            throw exception
+        } catch (exception: Exception) {
             store.rollback(articleId)
-            UiState.Error(e.message ?: "收藏失败")
+
+            UiState.Error(
+                exception.message ?: "收藏失败"
+            )
         }
     }
 
