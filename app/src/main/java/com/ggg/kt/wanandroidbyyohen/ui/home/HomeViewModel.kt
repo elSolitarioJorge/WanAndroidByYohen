@@ -3,20 +3,24 @@ package com.ggg.kt.wanandroidbyyohen.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ggg.kt.wanandroidbyyohen.common.base.UiState
+import com.ggg.kt.wanandroidbyyohen.data.collect.ArticleCollectProvider
+import com.ggg.kt.wanandroidbyyohen.data.collect.ArticleCollectState
 import com.ggg.kt.wanandroidbyyohen.data.model.Article
 import com.ggg.kt.wanandroidbyyohen.data.model.HomeData
-import com.ggg.kt.wanandroidbyyohen.data.repository.CollectRepository
 import com.ggg.kt.wanandroidbyyohen.data.repository.HomeRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
     private val repository = HomeRepository()
-    private val collectRepository = CollectRepository()
-
-    private val _collectState = MutableStateFlow<UiState<Pair<Int, Boolean>>?>(null)
-    val collectState: StateFlow<UiState<Pair<Int, Boolean>>?> = _collectState
+    private val articleCollectRepository = ArticleCollectProvider.repository
+    val collectStates: StateFlow<Map<Int, ArticleCollectState>> = articleCollectRepository.states
+    private val _collectErrors = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val collectErrors: SharedFlow<String> = _collectErrors.asSharedFlow()
     private val _homeState = MutableStateFlow<UiState<HomeData>>(UiState.Loading)
     val homeState: StateFlow<UiState<HomeData>> = _homeState
 
@@ -42,6 +46,7 @@ class HomeViewModel : ViewModel() {
             _homeState.value = UiState.Loading
             val result = repository.refreshHomeData()
             if (result is UiState.Success) {
+                articleCollectRepository.seed(result.data.articles)
                 currentHomeData = result.data
                 hasMore = result.data.hasMore
                 currentPage = 1
@@ -60,6 +65,7 @@ class HomeViewModel : ViewModel() {
             if (result is UiState.Success) {
                 val oldHomeData = currentHomeData
                 val newHomeData = result.data
+                articleCollectRepository.seed(newHomeData.articles)
                 val mergedHomeData = oldHomeData?.copy(
                     articles = oldHomeData.articles + newHomeData.articles,
                     isRefresh = false,
@@ -78,26 +84,17 @@ class HomeViewModel : ViewModel() {
 
     fun toggleCollect(article: Article) {
         viewModelScope.launch {
-            _collectState.value = UiState.Loading
-
-            val result = if (article.collect) {
-                collectRepository.uncollectArticle(article.id)
-            } else {
-                collectRepository.collectArticle(article.id)
-            }
-
-            _collectState.value = when (result) {
-                is UiState.Success -> {
-                    UiState.Success(article.id to !article.collect)
-                }
-
+            when (
+                val result = articleCollectRepository.toggle(
+                    articleId = article.id,
+                    fallbackCollected = article.collect
+                )
+            ) {
                 is UiState.Error -> {
-                    UiState.Error(result.message)
+                    _collectErrors.emit(result.message)
                 }
 
-                is UiState.Loading -> {
-                    UiState.Loading
-                }
+                else -> Unit
             }
         }
     }
