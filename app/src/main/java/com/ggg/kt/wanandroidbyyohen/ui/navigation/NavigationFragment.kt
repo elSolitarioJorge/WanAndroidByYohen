@@ -31,13 +31,11 @@ class NavigationFragment : Fragment() {
 
     private var suppressSectionScrollSync = false
 
-    private val categoryLayoutManager by lazy {
-        LinearLayoutManager(requireContext())
-    }
+    private val categoryLayoutManager: LinearLayoutManager
+        get() = binding.rvCategories.layoutManager as LinearLayoutManager
 
-    private val sectionLayoutManager by lazy {
-        LinearLayoutManager(requireContext())
-    }
+    private val sectionLayoutManager: LinearLayoutManager
+        get() = binding.rvSections.layoutManager as LinearLayoutManager
 
     private val navigationCategoryAdapter by lazy {
         SideCategoryAdapter<SectionUi<Article>>(
@@ -101,9 +99,9 @@ class NavigationFragment : Fragment() {
     }
 
     private fun initRecyclerView() {
-        binding.rvCategories.layoutManager = categoryLayoutManager
+        binding.rvCategories.layoutManager = LinearLayoutManager(requireContext())
         binding.rvCategories.itemAnimator = null
-        binding.rvSections.layoutManager = sectionLayoutManager
+        binding.rvSections.layoutManager = LinearLayoutManager(requireContext())
     }
 
     private fun initTopTabs() {
@@ -473,6 +471,13 @@ class NavigationFragment : Fragment() {
 
     override fun onDestroyView() {
         saveCurrentScrollState()
+
+        binding.rvCategories.adapter = null
+        binding.rvCategories.layoutManager = null
+        binding.rvSections.clearOnScrollListeners()
+        binding.rvSections.adapter = null
+        binding.rvSections.layoutManager = null
+
         super.onDestroyView()
         _binding = null
     }
